@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>REMAX Calc · Jéssica</title>
+
+  <!-- PWA / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RE/MAX Calc" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#003da5" />
+  <meta name="description" content="Calculadora de comissões imobiliárias RE/MAX para a Jéssica" />
+
+  <!-- Inline SVG icons like apple-touch-icon via data URI -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%23003da5'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='90' font-family='sans-serif'%3E%F0%9F%8F%A0%3C/text%3E%3C/svg%3E" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue:      #003da5;
+      --blue-dark: #002880;
+      --blue-mid:  #0050cc;
+      --red:       #e11b22;
+      --red-dark:  #b5141a;
+      --bg:        #f0f2f8;
+      --surface:   #ffffff;
+      --surface2:  #f8f9fe;
+      --border:    #dde3f0;
+      --text:      #0d1b3e;
+      --muted:     #6b7a99;
+      --green:     #00a878;
+      --green-bg:  #e6f7f3;
+      --radius:    18px;
+      --radius-sm: 10px;
+      --shadow:    0 4px 24px rgba(0,61,165,.10);
+      --shadow-lg: 0 12px 48px rgba(0,61,165,.18);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ── HEADER ── */
+    .app-header {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, var(--blue-mid) 100%);
+      padding: 52px 24px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .app-header::before {
+      content: '';
+      position: absolute;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      top: -80px; right: -60px;
+    }
+    .app-header::after {
+      content: '';
+      position: absolute;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(225,27,34,.15);
+      bottom: -40px; left: 20px;
+    }
+    .header-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.85);
+      margin-bottom: 14px;
+    }
+    .header-pill span { width:6px;height:6px;border-radius:50%;background:#e11b22;display:inline-block;animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+    .header-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+      position: relative;
+      z-index: 1;
+    }
+    .header-title em {
+      font-style: normal;
+      color: #ffd166;
+    }
+    .header-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,.6);
+      margin-top: 6px;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── MAIN CONTAINER ── */
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-label .icon { font-size: 14px; }
+
+    /* ── VENDA INPUT ── */
+    .input-wrap {
+      position: relative;
+    }
+    .input-prefix {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--blue);
+      pointer-events: none;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .value-input {
+      width: 100%;
+      padding: 18px 16px 18px 44px;
+      font-size: 26px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+    }
+    .value-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(0,61,165,.12);
+    }
+    .value-input::placeholder { color: #c2cce0; }
+
+    /* ── SELECT ── */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--blue);
+      font-size: 16px;
+      pointer-events: none;
+    }
+    select {
+      width: 100%;
+      padding: 15px 40px 15px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Sora', sans-serif;
+      color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    select:focus { border-color: var(--blue); }
+
+    .outros-input {
+      margin-top: 12px;
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      border: 2px solid var(--blue);
+      border-radius: var(--radius-sm);
+      background: rgba(0,61,165,.04);
+      outline: none;
+      -webkit-appearance: none;
+      display: none;
+      animation: slideDown .2s ease;
+    }
+    .outros-input.visible { display: block; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── ESCALÃO SLIDER ── */
+    .escalao-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .escalao-badge {
+      min-width: 72px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-mid));
+      color: #fff;
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+    }
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--blue) 0%, var(--blue) 30%, var(--border) 30%);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--blue);
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,61,165,.35);
+      transition: transform .15s;
+    }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
+
+    /* ── TOGGLE BUTTONS ── */
+    .toggle-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .toggle-btn {
+      padding: 14px 10px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle-btn .t-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .toggle-btn.active {
+      border-color: var(--blue);
+      background: rgba(0,61,165,.07);
+      color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0,61,165,.12);
+    }
+
+    /* ── CHECKBOX ── */
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .check-box {
+      width: 28px; height: 28px; min-width: 28px;
+      border: 2.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .check-box.checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check-icon { color: #fff; font-size: 16px; display: none; }
+    .check-box.checked .check-icon { display: block; }
+    .check-label { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .check-sub { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+    /* ── CREDITO PANEL ── */
+    .credito-panel {
+      display: none;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1.5px dashed var(--border);
+      animation: slideDown .25s ease;
+    }
+    .credito-panel.visible { display: block; }
+    .credito-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+    .credito-row-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .credito-base-toggle {
+      display: flex;
+      gap: 6px;
+    }
+    .base-btn {
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      font-family: 'Sora', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .base-btn.active {
+      border-color: var(--green);
+      background: var(--green-bg);
+      color: var(--green);
+    }
+    .credito-custom-wrap {
+      display: none;
+      margin-bottom: 12px;
+      animation: slideDown .2s ease;
+    }
+    .credito-custom-wrap.visible { display: block; }
+    .credito-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--green-bg);
+      border: 1px solid rgba(0,168,120,.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 500;
+    }
+    .credito-preview strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* ── CALCULATE BUTTON ── */
+    .btn-calc {
+      width: 100%;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--red-dark), var(--red) 60%, #ff4b51);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Sora', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(225,27,34,.4);
+      transition: transform .15s, box-shadow .15s;
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-calc::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(255,255,255,.15), transparent);
+      border-radius: inherit;
+    }
+    .btn-calc:active { transform: scale(.97); box-shadow: 0 4px 14px rgba(225,27,34,.35); }
+    .btn-calc.loading { opacity: .7; pointer-events: none; }
+
+    /* ── RESULTS ── */
+    .results-section {
+      display: none;
+      animation: fadeUp .45s cubic-bezier(.22,1,.36,1);
+    }
+    .results-section.visible { display: block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .results-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+      margin: 8px 0 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      animation: fadeUp .4s ease both;
+    }
+    .result-row:nth-child(2) { animation-delay: .05s; }
+    .result-row:nth-child(3) { animation-delay: .10s; }
+    .result-row-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .result-row-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .result-row.credit .result-row-val { color: var(--green); }
+
+    /* ── FINAL CARD ── */
+    .final-card {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 50%, var(--blue-mid) 100%);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      margin-top: 4px;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .final-card::before {
+      content: '';
+      position: absolute;
+      width: 200px;height:200px;border-radius:50%;
+      background: rgba(255,255,255,.06);
+      top:-60px;right:-40px;
+    }
+    .final-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 10px;
+    }
+    .final-card-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      text-shadow: 0 2px 12px rgba(0,0,0,.2);
+    }
+    .final-card-euro {
+      font-size: 22px;
+      vertical-align: super;
+      margin-right: 4px;
+      opacity: .8;
+    }
+    .final-card-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,.5);
+      margin-top: 8px;
+    }
+    .final-ribbon {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--red), #ff4b51);
+    }
+
+    /* ── CONFETTI CANVAS ── */
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── RESET BUTTON ── */
+    .btn-reset {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-reset:active { background: var(--bg); }
+
+    /* ── FOOTER ── */
+    .app-footer {
+      text-align: center;
+      padding: 24px 0 8px;
+      font-size: 11px;
+      color: var(--muted);
+      opacity: .7;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-pill"><span></span>RE/MAX Portugal</div>
+  <h1 class="header-title">Calculadora<br>da <em>Jéssica</em> 🏠</h1>
+  <p class="header-sub">Comissões imobiliárias · Atualizado 2025</p>
+</header>
+
+<!-- MAIN -->
+<main class="container">
+
+  <!-- VALOR DA VENDA -->
+  <div class="card">
+    <div class="field-label"><span class="icon">💶</span> Valor da Venda</div>
+    <div class="input-wrap">
+      <span class="input-prefix">€</span>
+      <input
+        id="valorInput"
+        class="value-input"
+        type="text"
+        inputmode="numeric"
+        placeholder="0"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </div>
+  </div>
+
+  <!-- COMISSÃO DA AGÊNCIA -->
+  <div class="card">
+    <div class="field-label"><span class="icon">🏢</span> Comissão da Agência</div>
+    <div class="select-wrap">
+      <select id="comissaoSelect">
+        <option value="5">5%</option>
+        <option value="4">4%</option>
+        <option value="3">3%</option>
+        <option value="outros">Outros</option>
+      </select>
+    </div>
+    <input
+      id="outrosInput"
+      class="outros-input"
+      type="number"
+      inputmode="decimal"
+      placeholder="Ex: 6,5"
+      min="0"
+      max="100"
+      step="0.1"
+    />
+  </div>
+
+  <!-- ESCALÃO -->
+  <div class="card">
+    <div class="field-label"><span class="icon">📊</span> Escalão RE/MAX</div>
+    <div class="escalao-row">
+      <div class="escalao-badge" id="escalaoLabel">40%</div>
+      <input
+        id="escalaoSlider"
+        type="range"
+        min="0" max="70" step="1" value="40"
+      />
+    </div>
+  </div>
+
+  <!-- PAPEL NO NEGÓCIO -->
+  <div class="card">
+    <div class="field-label"><span class="icon">🤝</span> Papel no Negócio</div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btnTotal" onclick="setPapel('total')">
+        <span class="t-icon">🌟</span>
+        Total<br><small style="font-weight:400;font-size:11px">Angariação + Venda</small>
+      </button>
+      <button class="toggle-btn" id="btnPartilha" onclick="setPapel('partilha')">
+        <span class="t-icon">🤲</span>
+        Partilha<br><small style="font-weight:400;font-size:11px">50% do negócio</small>
+      </button>
+    </div>
+  </div>
+
+  <!-- INTERMEDIAÇÃO DE CRÉDITO -->
+  <div class="card">
+    <div class="field-label"><span class="icon">💳</span> Intermediação de Crédito</div>
+    <label class="check-row" onclick="toggleCheck()">
+      <div class="check-box" id="checkBox">
+        <span class="check-icon">✓</span>
+      </div>
+      <div>
+        <div class="check-label">Houve intermediação de crédito?</div>
+        <div class="check-sub">Calcula 0,3% sobre o montante de crédito</div>
+      </div>
+    </label>
+
+    <!-- Painel expandido só visível quando checkbox ativa -->
+    <div class="credito-panel" id="creditoPanel">
+
+      <!-- Base do cálculo -->
+      <div class="credito-row">
+        <span class="credito-row-label">Base de cálculo</span>
+        <div class="credito-base-toggle">
+          <button class="base-btn active" id="btnBaseVenda" onclick="setBaseCredito('venda')">= Valor Venda</button>
+          <button class="base-btn" id="btnBaseCustom" onclick="setBaseCredito('custom')">Personalizado</button>
+        </div>
+      </div>
+
+      <!-- Input do valor personalizado -->
+      <div class="credito-custom-wrap" id="creditoCustomWrap">
+        <div class="input-wrap" style="margin-bottom:0">
+          <span class="input-prefix">€</span>
+          <input
+            id="creditoValorInput"
+            class="value-input"
+            style="font-size:20px;padding:14px 16px 14px 44px"
+            type="text"
+            inputmode="numeric"
+            placeholder="0"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Linha de resultado preview -->
+      <div class="credito-preview" id="creditoPreview">
+        <span>0,3% de <span id="previewBase">—</span></span>
+        <strong id="previewVal">0,00 €</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO CALCULAR -->
+  <button class="btn-calc" id="btnCalc" onclick="calcular()">
+    ✨ &nbsp;Calcular Ganho Final
+  </button>
+
+  <!-- RESULTADOS -->
+  <section class="results-section" id="resultsSection">
+    <p class="results-title">📋 Resumo dos Ganhos</p>
+
+    <div class="result-row" id="rowImob">
+      <span class="result-row-label">🏠 Ganho Imobiliário</span>
+      <span class="result-row-val" id="valImob">—</span>
+    </div>
+
+    <div class="result-row credit" id="rowCredito" style="display:none">
+      <span class="result-row-label">💳 Intermediação (0,3%)</span>
+      <span class="result-row-val" id="valCredito">—</span>
+    </div>
+
+    <div class="final-card" id="finalCard">
+      <div class="final-card-label">💰 Valor a Receber</div>
+      <div class="final-card-value">
+        <span class="final-card-euro">€</span><span id="valTotal">0</span>
+      </div>
+      <div class="final-card-sub" id="finalSub"></div>
+      <div class="final-ribbon"></div>
+    </div>
+
+    <button class="btn-reset" onclick="resetar()">↺ &nbsp;Novo Cálculo</button>
+  </section>
+
+  <div class="app-footer">RE/MAX Calc · Criado com 💙 para a Jéssica</div>
+
+</main>
+
+<script>
+  /* ── STATE ── */
+  let papel = 'total';
+  let creditoAtivo = false;
+  let baseCredito = 'venda'; // 'venda' | 'custom'
+
+  /* ── FORMATO PT ── */
+  function formatPT(v) {
+    return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /* ── VALOR INPUT: formato automático ── */
+  const valorInput = document.getElementById('valorInput');
+  valorInput.addEventListener('input', function () {
+    const raw = this.value.replace(/\D/g, '');
+    if (raw === '') { this.value = ''; return; }
+    const num = parseInt(raw, 10);
+    this.value = num.toLocaleString('pt-PT');
+    updateCreditoPreview();
+  });
+
+  /* ── COMISSÃO SELECT ── */
+  const comissaoSelect = document.getElementById('comissaoSelect');
+  const outrosInput    = document.getElementById('outrosInput');
+  comissaoSelect.addEventListener('change', function () {
+    if (this.value === 'outros') {
+      outrosInput.classList.add('visible');
+      outrosInput.focus();
+    } else {
+      outrosInput.classList.remove('visible');
+    }
+  });
+
+  /* ── ESCALÃO SLIDER ── */
+  const escalaoSlider = document.getElementById('escalaoSlider');
+  const escalaoLabel  = document.getElementById('escalaoLabel');
+  // Init slider fill at 40%
+  (function() {
+    const pct = (40 / 70) * 100;
+    escalaoSlider.style.background =
+      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
+  })();
+  escalaoSlider.addEventListener('input', function () {
+    escalaoLabel.textContent = this.value + '%';
+    const pct = (this.value / 70) * 100;
+    this.style.background =
+      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
+  });
+
+  /* ── PAPEL ── */
+  function setPapel(p) {
+    papel = p;
+    document.getElementById('btnTotal').classList.toggle('active', p === 'total');
+    document.getElementById('btnPartilha').classList.toggle('active', p === 'partilha');
+  }
+
+  /* ── CHECKBOX CRÉDITO ── */
+  function toggleCheck() {
+    creditoAtivo = !creditoAtivo;
+    document.getElementById('checkBox').classList.toggle('checked', creditoAtivo);
+    document.getElementById('creditoPanel').classList.toggle('visible', creditoAtivo);
+    if (creditoAtivo) updateCreditoPreview();
+  }
+
+  /* ── BASE CRÉDITO ── */
+  function setBaseCredito(base) {
+    baseCredito = base;
+    document.getElementById('btnBaseVenda').classList.toggle('active', base === 'venda');
+    document.getElementById('btnBaseCustom').classList.toggle('active', base === 'custom');
+    const customWrap = document.getElementById('creditoCustomWrap');
+    if (base === 'custom') {
+      customWrap.classList.add('visible');
+      document.getElementById('creditoValorInput').focus();
+    } else {
+      customWrap.classList.remove('visible');
+    }
+    updateCreditoPreview();
+  }
+
+  /* ── INPUT CRÉDITO PERSONALIZADO ── */
+  const creditoValorInput = document.getElementById('creditoValorInput');
+  creditoValorInput.addEventListener('input', function () {
+    const raw = this.value.replace(/\D/g, '');
+    if (raw === '') { this.value = ''; updateCreditoPreview(); return; }
+    const num = parseInt(raw, 10);
+    this.value = num.toLocaleString('pt-PT');
+    updateCreditoPreview();
+  });
+
+  /* ── PREVIEW DO CRÉDITO ── */
+  function updateCreditoPreview() {
+    const montante = getMontanteCredito();
+    const ganho = montante * 0.003;
+    document.getElementById('previewBase').textContent = formatPT(montante) + ' €';
+    document.getElementById('previewVal').textContent  = formatPT(ganho) + ' €';
+  }
+
+  function getMontanteCredito() {
+    if (baseCredito === 'venda') {
+      const raw = valorInput.value.replace(/\./g, '').replace(/\s/g, '');
+      return parseFloat(raw) || 0;
+    } else {
+      const raw = creditoValorInput.value.replace(/\./g, '').replace(/\s/g, '');
+      return parseFloat(raw) || 0;
+    }
+  }
+
+  /* ── CALCULAR ── */
+  function calcular() {
+    const rawValor = valorInput.value.replace(/\./g, '').replace(/\s/g, '');
+    const valorVenda = parseFloat(rawValor) || 0;
+
+    if (valorVenda <= 0) {
+      valorInput.focus();
+      valorInput.style.borderColor = 'var(--red)';
+      setTimeout(() => valorInput.style.borderColor = '', 1200);
+      return;
+    }
+
+    let percAgencia;
+    if (comissaoSelect.value === 'outros') {
+      percAgencia = parseFloat(outrosInput.value) || 0;
+    } else {
+      percAgencia = parseFloat(comissaoSelect.value);
+    }
+
+    const escalao = parseInt(escalaoSlider.value, 10);
+    const multPapel = papel === 'total' ? 1.0 : 0.5;
+
+    const comissaoBruta    = valorVenda * (percAgencia / 100);
+    const baseConsultor    = comissaoBruta * multPapel;
+    const ganhoImobiliario = baseConsultor * (escalao / 100);
+    const montanteCredito  = getMontanteCredito();
+    const ganhoCredito     = creditoAtivo ? montanteCredito * 0.003 : 0;
+    const totalAcumulado   = ganhoImobiliario + ganhoCredito;
+
+    /* Preenche resultados */
+    document.getElementById('valImob').textContent  = formatPT(ganhoImobiliario) + ' €';
+    document.getElementById('valTotal').textContent = formatPT(totalAcumulado);
+
+    const rowCredito = document.getElementById('rowCredito');
+    if (creditoAtivo) {
+      const labelBase = baseCredito === 'venda'
+        ? 'valor da venda'
+        : formatPT(montanteCredito) + ' €';
+      document.getElementById('rowCredito').querySelector('.result-row-label').textContent =
+        `💳 Crédito (0,3% de ${labelBase})`;
+      document.getElementById('valCredito').textContent = formatPT(ganhoCredito) + ' €';
+      rowCredito.style.display = 'flex';
+    } else {
+      rowCredito.style.display = 'none';
+    }
+
+    const papelLabel = papel === 'total' ? 'Total (Ang. + Venda)' : 'Partilha (50%)';
+    document.getElementById('finalSub').textContent =
+      `${percAgencia}% comissão · Escalão ${escalao}% · ${papelLabel}`;
+
+    /* Mostra secção */
+    const sec = document.getElementById('resultsSection');
+    sec.classList.add('visible');
+    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    /* Confetti 🎉 */
+    launchConfetti();
+  }
+
+  /* ── RESET ── */
+  function resetar() {
+    document.getElementById('resultsSection').classList.remove('visible');
+    valorInput.value = '';
+    comissaoSelect.value = '5';
+    outrosInput.classList.remove('visible');
+    escalaoSlider.value = 40;
+    escalaoLabel.textContent = '40%';
+    const pct = (40 / 70) * 100;
+    escalaoSlider.style.background =
+      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
+    setPapel('total');
+    creditoAtivo = false;
+    baseCredito = 'venda';
+    document.getElementById('checkBox').classList.remove('checked');
+    document.getElementById('creditoPanel').classList.remove('visible');
+    document.getElementById('creditoCustomWrap').classList.remove('visible');
+    document.getElementById('creditoValorInput').value = '';
+    document.getElementById('btnBaseVenda').classList.add('active');
+    document.getElementById('btnBaseCustom').classList.remove('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── CONFETTI ── */
+  function launchConfetti() {
+    const canvas  = document.getElementById('confetti-canvas');
+    const ctx     = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#003da5','#e11b22','#ffd166','#06d6a0','#fff','#0050cc'];
+    const pieces = [];
+    const count  = 120;
+
+    for (let i = 0; i < count; i++) {
+      pieces.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        r: Math.random() * 7 + 4,
+        d: Math.random() * count,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngle: 0,
+        tiltAngleInc: (Math.random() * 0.07) + 0.05
+      });
+    }
+
+    let angle = 0;
+    let frame = 0;
+    const maxFrames = 200;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      angle += 0.01;
+      frame++;
+      for (let i = 0; i < pieces.length; i++) {
+        const p = pieces[i];
+        p.tiltAngle += p.tiltAngleInc;
+        p.y += (Math.cos(angle + p.d) + 2.5);
+        p.x += Math.sin(angle) * 1.2;
+        p.tilt = Math.sin(p.tiltAngle) * 12;
+        ctx.beginPath();
+        ctx.lineWidth = p.r / 2;
+        ctx.strokeStyle = p.color;
+        ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+        ctx.stroke();
+      }
+      if (frame < maxFrames) {
+        requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    draw();
+  }
+
+  /* ── PWA: esconde barra de endereço ── */
+  window.addEventListener('load', () => {
+    if (window.navigator.standalone !== true) {
+      setTimeout(() => window.scrollTo(0, 1), 100);
+    }
+  });
+</script>
+</body>
+</html>
