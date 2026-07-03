@@ -817,8 +817,13 @@
           <div id="modalCreditoCustomWrap" style="display:none;margin-bottom:10px;animation:slideDown .2s ease">
             <input type="text" class="std-input" id="fCreditoValor" inputmode="numeric" placeholder="Ex: 200.000" />
           </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap">% Comissão crédito</span>
+            <input type="number" class="std-input" id="fPercCredito" value="0.3" step="0.05" min="0" max="5"
+              style="max-width:90px;padding:8px 10px;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace" />
+          </div>
           <div class="credito-preview">
-            <span>0,3% de <span id="mPreviewBase">—</span></span>
+            <span><span id="mPreviewPerc">0,3</span>% de <span id="mPreviewBase">—</span></span>
             <strong id="mPreviewVal">0,00 €</strong>
           </div>
         </div>
@@ -874,19 +879,18 @@ function loading(on) {
 }
 
 /* ── FORMAT INPUT — força ponto como separador de milhares ── */
-function fmtNumInput(el) {
+function fmtNumInput(el, onAfter) {
   el.addEventListener('input', function() {
     const raw = this.value.replace(/\D/g,'');
-    if (!raw) { this.value=''; return; }
-    // Formata manualmente com pontos: 200000 → 200.000
+    if (!raw) { this.value=''; if(onAfter) onAfter(); return; }
     this.value = parseInt(raw,10).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    if(onAfter) onAfter();
   });
 }
 
 /* ── PARSE — lê valor com pontos de milhares ── */
 function parsePT(s) {
   if (!s) return 0;
-  // Remove pontos de milhares, substitui vírgula decimal por ponto
   const clean = s.toString().trim().replace(/\./g,'').replace(',','.');
   return parseFloat(clean) || 0;
 }
@@ -905,8 +909,7 @@ window.showPage = function(name) {
    TAB 1 — CALCULADORA
 ══════════════════════════════════ */
 const valorInput = document.getElementById('valorInput');
-fmtNumInput(valorInput);
-valorInput.addEventListener('input', updateCreditoPreview);
+fmtNumInput(valorInput, updateCreditoPreview);
 
 const comissaoSelect = document.getElementById('comissaoSelect');
 const outrosInput    = document.getElementById('outrosInput');
@@ -1142,27 +1145,32 @@ function getModalMontanteCredito() {
   if (modalBaseCredito==='venda') return parsePT(document.getElementById('fValor').value);
   return parsePT(document.getElementById('fCreditoValor').value);
 }
+function getPercCredito() {
+  return parseFloat(document.getElementById('fPercCredito').value) || 0.3;
+}
 function calcModalCreditoPreview() {
   const m = getModalMontanteCredito();
+  const p = getPercCredito();
+  const perc = p.toLocaleString('pt-PT', {minimumFractionDigits:1, maximumFractionDigits:2});
+  if(document.getElementById('mPreviewPerc')) document.getElementById('mPreviewPerc').textContent = perc;
   document.getElementById('mPreviewBase').textContent = formatPT(m)+' €';
-  document.getElementById('mPreviewVal').textContent  = formatPT(m*0.003)+' €';
+  document.getElementById('mPreviewVal').textContent  = formatPT(m*(p/100))+' €';
 }
 
-fmtNumInput(document.getElementById('fValor'));
-fmtNumInput(document.getElementById('fComAgencia'));
-fmtNumInput(document.getElementById('fComJessica'));
-fmtNumInput(document.getElementById('fCreditoValor'));
-
-// Trigger auto-calc on every relevant change
-['fPercTotal','fPercAgente'].forEach(id =>
-  document.getElementById(id).addEventListener('input', calcModalComissoes));
-document.getElementById('fTipoNeg').addEventListener('change', calcModalComissoes);
-// fValor has fmtNumInput which fires 'input' — listen after formatting
-document.getElementById('fValor').addEventListener('input', function() {
+fmtNumInput(document.getElementById('fValor'), function() {
   calcModalComissoes();
   calcModalCreditoPreview();
 });
+fmtNumInput(document.getElementById('fComAgencia'));
+fmtNumInput(document.getElementById('fComJessica'));
+fmtNumInput(document.getElementById('fCreditoValor'), calcModalCreditoPreview);
+
+// Outros triggers (percentagens e tipo negócio)
+['fPercTotal','fPercAgente'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calcModalComissoes));
+document.getElementById('fTipoNeg').addEventListener('change', calcModalComissoes);
 document.getElementById('fCreditoValor').addEventListener('input', calcModalCreditoPreview);
+document.getElementById('fPercCredito').addEventListener('input', calcModalCreditoPreview);
 
 window.openModal = function(id=null) {
   editingId = id;
@@ -1176,6 +1184,7 @@ window.openModal = function(id=null) {
   });
   setModoComissao('auto');
   setModoCredito('nao');
+  document.getElementById('fPercCredito').value = 0.3;
   document.getElementById('mBtnBaseVenda').classList.add('active');
   document.getElementById('mBtnBaseCustom').classList.remove('active');
   document.getElementById('modalCreditoCustomWrap').style.display='none';
@@ -1202,6 +1211,7 @@ window.openModal = function(id=null) {
       }
       if (n.ganhoCredito) {
         setModoCredito('sim');
+        document.getElementById('fPercCredito').value = n.percCredito || 0.3;
         if (n.creditoBase==='custom') {
           setModalBaseCredito('custom');
           document.getElementById('fCreditoValor').value = n.creditoValor ? Math.round(n.creditoValor).toLocaleString('pt-PT'):'';
@@ -1232,8 +1242,9 @@ window.salvarNegocio = async function() {
     comAgencia = parsePT(document.getElementById('fComAgencia').value);
     comJessica = parsePT(document.getElementById('fComJessica').value);
   }
+  const percCredito  = getPercCredito();
   const montCredito  = getModalMontanteCredito();
-  const ganhoCredito = modalModoCredito==='sim' ? montCredito*0.003 : 0;
+  const ganhoCredito = modalModoCredito==='sim' ? montCredito*(percCredito/100) : 0;
   const data = {
     data: document.getElementById('fData').value,
     tipo1: document.getElementById('fTipo1').value,
@@ -1244,7 +1255,7 @@ window.salvarNegocio = async function() {
     percTotal, percAgente: percAg,
     comAgencia, comJessica,
     override: modalModoComissao==='manual',
-    ganhoCredito, creditoBase: modalBaseCredito, creditoValor: montCredito,
+    ganhoCredito, percCredito, creditoBase: modalBaseCredito, creditoValor: montCredito,
     totalGanho: comJessica+ganhoCredito, ts: serverTimestamp()
   };
   loading(true);
