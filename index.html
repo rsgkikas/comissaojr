@@ -873,13 +873,22 @@ function loading(on) {
   document.getElementById('loadingBar').classList.toggle('visible', on);
 }
 
-/* ── FORMAT INPUT ── */
+/* ── FORMAT INPUT — força ponto como separador de milhares ── */
 function fmtNumInput(el) {
   el.addEventListener('input', function() {
     const raw = this.value.replace(/\D/g,'');
     if (!raw) { this.value=''; return; }
-    this.value = parseInt(raw,10).toLocaleString('pt-PT');
+    // Formata manualmente com pontos: 200000 → 200.000
+    this.value = parseInt(raw,10).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
   });
+}
+
+/* ── PARSE — lê valor com pontos de milhares ── */
+function parsePT(s) {
+  if (!s) return 0;
+  // Remove pontos de milhares, substitui vírgula decimal por ponto
+  const clean = s.toString().trim().replace(/\./g,'').replace(',','.');
+  return parseFloat(clean) || 0;
 }
 
 /* ── PAGE NAVIGATION ── */
@@ -1182,14 +1191,13 @@ window.openModal = function(id=null) {
       document.getElementById('fLocal').value      = n.local||'';
       document.getElementById('fOrigem').value     = n.origem||'';
       document.getElementById('fTipoNeg').value    = n.tipoNeg||'Partilha';
-      document.getElementById('fValor').value      = n.valorVenda ? Math.round(n.valorVenda).toLocaleString('pt-PT'):'';
+      document.getElementById('fValor').value      = n.valorVenda ? Math.round(n.valorVenda).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
       document.getElementById('fPercTotal').value  = n.percTotal||'';
       document.getElementById('fPercAgente').value = n.percAgente||'';
       if (n.override) {
         setModoComissao('manual');
-        document.getElementById('fComAgencia').value = n.comAgencia ? Math.round(n.comAgencia).toLocaleString('pt-PT'):'';
-        document.getElementById('fComJessica').value = n.comJessica ? Math.round(n.comJessica).toLocaleString('pt-PT'):'';
-      } else {
+        document.getElementById('fComAgencia').value = n.comAgencia ? Math.round(n.comAgencia).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
+        document.getElementById('fComJessica').value = n.comJessica ? Math.round(n.comJessica).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';      } else {
         setModoComissao('auto'); calcModalComissoes();
       }
       if (n.ganhoCredito) {
