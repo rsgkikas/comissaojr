@@ -4,22 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>REMAX Calc · Jéssica</title>
-
-  <!-- PWA / iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="RE/MAX Calc" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#003da5" />
   <meta name="description" content="Calculadora de comissões imobiliárias RE/MAX para a Jéssica" />
-
-  <!-- Inline SVG icons like apple-touch-icon via data URI -->
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%23003da5'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='90' font-family='sans-serif'%3E%F0%9F%8F%A0%3C/text%3E%3C/svg%3E" />
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
@@ -36,937 +33,1184 @@
       --muted:     #6b7a99;
       --green:     #00a878;
       --green-bg:  #e6f7f3;
+      --orange:    #f4a231;
+      --purple:    #7c3aed;
       --radius:    18px;
       --radius-sm: 10px;
       --shadow:    0 4px 24px rgba(0,61,165,.10);
       --shadow-lg: 0 12px 48px rgba(0,61,165,.18);
+      --nav-h:     64px;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { height: 100%; }
-
     body {
       font-family: 'Sora', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100%;
       -webkit-font-smoothing: antialiased;
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
     }
 
-    /* ── HEADER ── */
+    /* ══ BOTTOM NAV ══ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      padding-top: 8px;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 100;
+      box-shadow: 0 -4px 20px rgba(0,61,165,.08);
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .15s;
+    }
+    .nav-btn:active { transform: scale(.92); }
+    .nav-icon {
+      font-size: 22px;
+      line-height: 1;
+      filter: grayscale(1) opacity(.4);
+      transition: filter .2s, transform .2s;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .03em;
+      transition: color .2s;
+    }
+    .nav-btn.active .nav-icon  { filter: none; transform: scale(1.1); }
+    .nav-btn.active .nav-label { color: var(--blue); }
+
+    /* ══ PAGES ══ */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ══ HEADER ══ */
     .app-header {
       background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, var(--blue-mid) 100%);
-      padding: 52px 24px 32px;
+      padding: 52px 24px 28px;
       position: relative;
       overflow: hidden;
     }
     .app-header::before {
-      content: '';
-      position: absolute;
-      width: 260px; height: 260px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.05);
-      top: -80px; right: -60px;
+      content:''; position:absolute;
+      width:260px;height:260px;border-radius:50%;
+      background:rgba(255,255,255,.05);top:-80px;right:-60px;
     }
     .app-header::after {
-      content: '';
-      position: absolute;
-      width: 160px; height: 160px;
-      border-radius: 50%;
-      background: rgba(225,27,34,.15);
-      bottom: -40px; left: 20px;
+      content:''; position:absolute;
+      width:160px;height:160px;border-radius:50%;
+      background:rgba(225,27,34,.15);bottom:-40px;left:20px;
     }
     .header-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.2);
-      border-radius: 100px;
-      padding: 4px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.85);
-      margin-bottom: 14px;
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+      border-radius:100px;padding:4px 14px;font-size:11px;font-weight:600;
+      letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:14px;
     }
-    .header-pill span { width:6px;height:6px;border-radius:50%;background:#e11b22;display:inline-block;animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
-    .header-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
-      line-height: 1.15;
-      position: relative;
-      z-index: 1;
-    }
-    .header-title em {
-      font-style: normal;
-      color: #ffd166;
-    }
-    .header-sub {
-      font-size: 13px;
-      color: rgba(255,255,255,.6);
-      margin-top: 6px;
-      font-weight: 400;
-      position: relative;
-      z-index: 1;
-    }
+    .header-pill span{width:6px;height:6px;border-radius:50%;background:#e11b22;display:inline-block;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+    .header-title{font-size:26px;font-weight:800;color:#fff;line-height:1.15;position:relative;z-index:1;}
+    .header-title em{font-style:normal;color:#ffd166;}
+    .header-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:6px;font-weight:400;position:relative;z-index:1;}
 
-    /* ── MAIN CONTAINER ── */
-    .container {
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
+    /* ══ CONTAINER ══ */
+    .container { max-width:520px;margin:0 auto;padding:20px 16px 32px; }
 
-    /* ── CARD ── */
+    /* ══ CARD ══ */
     .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 22px 20px;
-      margin-bottom: 14px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
+      background:var(--surface);border-radius:var(--radius);
+      padding:20px;margin-bottom:14px;
+      box-shadow:var(--shadow);border:1px solid var(--border);
     }
-
     .field-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;
     }
-    .field-label .icon { font-size: 14px; }
 
-    /* ── VENDA INPUT ── */
-    .input-wrap {
-      position: relative;
-    }
+    /* ══ INPUTS ══ */
+    .input-wrap { position:relative; }
     .input-prefix {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--blue);
-      pointer-events: none;
-      font-family: 'JetBrains Mono', monospace;
+      position:absolute;left:16px;top:50%;transform:translateY(-50%);
+      font-size:20px;font-weight:700;color:var(--blue);pointer-events:none;
+      font-family:'JetBrains Mono',monospace;
     }
     .value-input {
-      width: 100%;
-      padding: 18px 16px 18px 44px;
-      font-size: 26px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface2);
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      -webkit-appearance: none;
+      width:100%;padding:16px 16px 16px 44px;font-size:24px;font-weight:700;
+      font-family:'JetBrains Mono',monospace;color:var(--text);
+      border:2px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--surface2);outline:none;
+      transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;
     }
-    .value-input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(0,61,165,.12);
+    .value-input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,61,165,.12);}
+    .value-input::placeholder{color:#c2cce0;}
+    .std-input {
+      width:100%;padding:13px 16px;font-size:14px;font-weight:600;
+      font-family:'Sora',sans-serif;color:var(--text);
+      border:2px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--surface2);outline:none;-webkit-appearance:none;
+      transition:border-color .2s;
     }
-    .value-input::placeholder { color: #c2cce0; }
+    .std-input:focus{border-color:var(--blue);}
 
-    /* ── SELECT ── */
-    .select-wrap { position: relative; }
-    .select-wrap::after {
-      content: '▾';
-      position: absolute;
-      right: 16px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--blue);
-      font-size: 16px;
-      pointer-events: none;
+    /* ══ SELECT ══ */
+    .select-wrap{position:relative;}
+    .select-wrap::after{content:'▾';position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:16px;pointer-events:none;}
+    select{
+      width:100%;padding:13px 40px 13px 16px;font-size:14px;font-weight:600;
+      font-family:'Sora',sans-serif;color:var(--text);
+      border:2px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--surface2);outline:none;-webkit-appearance:none;appearance:none;
+      cursor:pointer;transition:border-color .2s;
     }
-    select {
-      width: 100%;
-      padding: 15px 40px 15px 16px;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: 'Sora', sans-serif;
-      color: var(--text);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface2);
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      transition: border-color .2s;
+    select:focus{border-color:var(--blue);}
+    .outros-input{
+      margin-top:10px;width:100%;padding:12px 16px;font-size:15px;font-weight:600;
+      font-family:'JetBrains Mono',monospace;color:var(--text);
+      border:2px solid var(--blue);border-radius:var(--radius-sm);
+      background:rgba(0,61,165,.04);outline:none;-webkit-appearance:none;
+      display:none;animation:slideDown .2s ease;
     }
-    select:focus { border-color: var(--blue); }
+    .outros-input.visible{display:block;}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
-    .outros-input {
-      margin-top: 12px;
-      width: 100%;
-      padding: 14px 16px;
-      font-size: 16px;
-      font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text);
-      border: 2px solid var(--blue);
-      border-radius: var(--radius-sm);
-      background: rgba(0,61,165,.04);
-      outline: none;
-      -webkit-appearance: none;
-      display: none;
-      animation: slideDown .2s ease;
+    /* ══ SLIDER ══ */
+    .escalao-row{display:flex;align-items:center;gap:14px;}
+    .escalao-badge{
+      min-width:68px;padding:10px 12px;
+      background:linear-gradient(135deg,var(--blue),var(--blue-mid));
+      color:#fff;border-radius:var(--radius-sm);
+      font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;text-align:center;
     }
-    .outros-input.visible { display: block; }
-    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    input[type=range]{
+      flex:1;-webkit-appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;
+      background:linear-gradient(to right,var(--blue) 0%,var(--blue) 57%,var(--border) 57%);
+    }
+    input[type=range]::-webkit-slider-thumb{
+      -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+      background:var(--blue);border:3px solid #fff;
+      box-shadow:0 2px 8px rgba(0,61,165,.35);transition:transform .15s;
+    }
+    input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25);}
 
-    /* ── ESCALÃO SLIDER ── */
-    .escalao-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    /* ══ TOGGLE BUTTONS ══ */
+    .toggle-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .toggle-btn{
+      padding:13px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--surface2);font-family:'Sora',sans-serif;font-size:12px;
+      font-weight:600;color:var(--muted);cursor:pointer;text-align:center;
+      transition:all .2s;line-height:1.4;-webkit-tap-highlight-color:transparent;
     }
-    .escalao-badge {
-      min-width: 72px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, var(--blue), var(--blue-mid));
-      color: #fff;
-      border-radius: var(--radius-sm);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-    }
-    input[type=range] {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 6px;
-      border-radius: 3px;
-      background: linear-gradient(to right, var(--blue) 0%, var(--blue) 30%, var(--border) 30%);
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      background: var(--blue);
-      border: 3px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,61,165,.35);
-      transition: transform .15s;
-    }
-    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
+    .toggle-btn .t-icon{font-size:18px;display:block;margin-bottom:3px;}
+    .toggle-btn.active{border-color:var(--blue);background:rgba(0,61,165,.07);color:var(--blue);box-shadow:0 0 0 3px rgba(0,61,165,.12);}
 
-    /* ── TOGGLE BUTTONS ── */
-    .toggle-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    /* ══ CHECKBOX ══ */
+    .check-row{display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .check-box{
+      width:28px;height:28px;min-width:28px;border:2.5px solid var(--border);
+      border-radius:8px;background:var(--surface2);display:flex;align-items:center;
+      justify-content:center;transition:all .2s;
     }
-    .toggle-btn {
-      padding: 14px 10px;
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface2);
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      text-align: center;
-      transition: all .2s;
-      line-height: 1.4;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .toggle-btn .t-icon { font-size: 20px; display: block; margin-bottom: 4px; }
-    .toggle-btn.active {
-      border-color: var(--blue);
-      background: rgba(0,61,165,.07);
-      color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(0,61,165,.12);
-    }
+    .check-box.checked{background:var(--green);border-color:var(--green);}
+    .check-icon{color:#fff;font-size:16px;display:none;}
+    .check-box.checked .check-icon{display:block;}
+    .check-label{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;}
+    .check-sub{font-size:12px;color:var(--muted);font-weight:400;}
 
-    /* ── CHECKBOX ── */
-    .check-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+    /* ══ CREDITO PANEL ══ */
+    .credito-panel{display:none;margin-top:16px;padding-top:14px;border-top:1.5px dashed var(--border);animation:slideDown .25s ease;}
+    .credito-panel.visible{display:block;}
+    .credito-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+    .credito-row-label{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;}
+    .credito-base-toggle{display:flex;gap:6px;}
+    .base-btn{
+      padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;
+      background:var(--surface2);font-family:'Sora',sans-serif;font-size:12px;
+      font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s;
+      -webkit-tap-highlight-color:transparent;
     }
-    .check-box {
-      width: 28px; height: 28px; min-width: 28px;
-      border: 2.5px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
+    .base-btn.active{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+    .credito-custom-wrap{display:none;margin-bottom:12px;animation:slideDown .2s ease;}
+    .credito-custom-wrap.visible{display:block;}
+    .credito-preview{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--green-bg);border:1px solid rgba(0,168,120,.2);
+      border-radius:var(--radius-sm);padding:10px 14px;
+      font-size:12px;color:var(--green);font-weight:500;
     }
-    .check-box.checked {
-      background: var(--green);
-      border-color: var(--green);
-    }
-    .check-icon { color: #fff; font-size: 16px; display: none; }
-    .check-box.checked .check-icon { display: block; }
-    .check-label { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
-    .check-sub { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .credito-preview strong{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;}
 
-    /* ── CREDITO PANEL ── */
-    .credito-panel {
-      display: none;
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1.5px dashed var(--border);
-      animation: slideDown .25s ease;
+    /* ══ CALC BUTTON ══ */
+    .btn-calc{
+      width:100%;padding:18px;
+      background:linear-gradient(135deg,var(--red-dark),var(--red) 60%,#ff4b51);
+      color:#fff;border:none;border-radius:var(--radius);
+      font-family:'Sora',sans-serif;font-size:16px;font-weight:800;
+      letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+      box-shadow:0 8px 28px rgba(225,27,34,.4);
+      transition:transform .15s,box-shadow .15s;
+      -webkit-tap-highlight-color:transparent;margin-top:6px;
+      position:relative;overflow:hidden;
     }
-    .credito-panel.visible { display: block; }
-    .credito-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 10px;
-    }
-    .credito-row-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .credito-base-toggle {
-      display: flex;
-      gap: 6px;
-    }
-    .base-btn {
-      padding: 7px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface2);
-      font-family: 'Sora', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all .18s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .base-btn.active {
-      border-color: var(--green);
-      background: var(--green-bg);
-      color: var(--green);
-    }
-    .credito-custom-wrap {
-      display: none;
-      margin-bottom: 12px;
-      animation: slideDown .2s ease;
-    }
-    .credito-custom-wrap.visible { display: block; }
-    .credito-preview {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--green-bg);
-      border: 1px solid rgba(0,168,120,.2);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--green);
-      font-weight: 500;
-    }
-    .credito-preview strong {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      font-weight: 700;
-    }
+    .btn-calc::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.15),transparent);border-radius:inherit;}
+    .btn-calc:active{transform:scale(.97);box-shadow:0 4px 14px rgba(225,27,34,.35);}
 
-    /* ── CALCULATE BUTTON ── */
-    .btn-calc {
-      width: 100%;
-      padding: 20px;
-      background: linear-gradient(135deg, var(--red-dark), var(--red) 60%, #ff4b51);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-family: 'Sora', sans-serif;
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      box-shadow: 0 8px 28px rgba(225,27,34,.4);
-      transition: transform .15s, box-shadow .15s;
-      -webkit-tap-highlight-color: transparent;
-      margin-top: 8px;
-      position: relative;
-      overflow: hidden;
+    /* ══ RESULTS ══ */
+    .results-section{display:none;animation:fadeUp .45s cubic-bezier(.22,1,.36,1);}
+    .results-section.visible{display:block;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .results-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;margin:8px 0 12px;}
+    .result-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:14px 18px;background:var(--surface);border-radius:var(--radius-sm);
+      border:1px solid var(--border);margin-bottom:10px;animation:fadeUp .4s ease both;
     }
-    .btn-calc::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(rgba(255,255,255,.15), transparent);
-      border-radius: inherit;
+    .result-row-label{font-size:13px;font-weight:600;color:var(--muted);}
+    .result-row-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--text);}
+    .result-row.credit .result-row-val{color:var(--green);}
+    .final-card{
+      background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue) 50%,var(--blue-mid) 100%);
+      border-radius:var(--radius);padding:26px 22px;text-align:center;
+      position:relative;overflow:hidden;box-shadow:var(--shadow-lg);margin-top:4px;
+      animation:fadeUp .5s .15s ease both;
     }
-    .btn-calc:active { transform: scale(.97); box-shadow: 0 4px 14px rgba(225,27,34,.35); }
-    .btn-calc.loading { opacity: .7; pointer-events: none; }
+    .final-card::before{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.06);top:-60px;right:-40px;}
+    .final-card-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:10px;}
+    .final-card-value{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:700;color:#fff;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.2);}
+    .final-card-euro{font-size:20px;vertical-align:super;margin-right:4px;opacity:.8;}
+    .final-card-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:8px;}
+    .final-ribbon{position:absolute;bottom:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--red),#ff4b51);}
+    .btn-reset{
+      width:100%;padding:13px;background:transparent;color:var(--muted);
+      border:1.5px solid var(--border);border-radius:var(--radius-sm);
+      font-family:'Sora',sans-serif;font-size:14px;font-weight:600;
+      cursor:pointer;margin-top:12px;transition:all .2s;-webkit-tap-highlight-color:transparent;
+    }
+    .btn-reset:active{background:var(--bg);}
 
-    /* ── RESULTS ── */
-    .results-section {
-      display: none;
-      animation: fadeUp .45s cubic-bezier(.22,1,.36,1);
+    /* ══ PAGE 2 — NEGÓCIOS ══ */
+    .page-header{
+      background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue) 60%,var(--blue-mid) 100%);
+      padding:52px 20px 20px;position:relative;overflow:hidden;
     }
-    .results-section.visible { display: block; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .page-header::before{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.05);top:-60px;right:-40px;}
+    .page-header-title{font-size:22px;font-weight:800;color:#fff;position:relative;z-index:1;}
+    .page-header-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;position:relative;z-index:1;}
 
-    .results-title {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-align: center;
-      margin: 8px 0 14px;
+    .fab{
+      position:fixed;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
+      right:20px;width:56px;height:56px;border-radius:50%;
+      background:linear-gradient(135deg,var(--red-dark),var(--red));
+      color:#fff;font-size:28px;line-height:56px;text-align:center;
+      box-shadow:0 6px 20px rgba(225,27,34,.45);cursor:pointer;
+      border:none;z-index:50;transition:transform .15s;
+      -webkit-tap-highlight-color:transparent;
     }
+    .fab:active{transform:scale(.93);}
 
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      background: var(--surface);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      margin-bottom: 10px;
-      animation: fadeUp .4s ease both;
+    /* negócio cards list */
+    .negocio-card{
+      background:var(--surface);border-radius:var(--radius);
+      padding:16px;margin-bottom:12px;
+      box-shadow:var(--shadow);border:1px solid var(--border);
+      animation:fadeUp .35s ease both;
     }
-    .result-row:nth-child(2) { animation-delay: .05s; }
-    .result-row:nth-child(3) { animation-delay: .10s; }
-    .result-row-label { font-size: 13px; font-weight: 600; color: var(--muted); }
-    .result-row-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text);
+    .negocio-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+    .negocio-tipo{font-size:13px;font-weight:700;color:var(--blue);}
+    .negocio-data{font-size:11px;color:var(--muted);font-weight:500;}
+    .negocio-local{font-size:12px;color:var(--muted);margin-bottom:10px;}
+    .negocio-vals{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .negocio-val-box{background:var(--surface2);border-radius:8px;padding:8px 10px;}
+    .negocio-val-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+    .negocio-val-num{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);margin-top:2px;}
+    .negocio-val-num.green{color:var(--green);}
+    .negocio-actions{display:flex;gap:8px;margin-top:12px;}
+    .btn-edit,.btn-del{
+      flex:1;padding:8px;border-radius:8px;font-family:'Sora',sans-serif;
+      font-size:12px;font-weight:700;cursor:pointer;border:none;
+      -webkit-tap-highlight-color:transparent;transition:opacity .15s;
     }
-    .result-row.credit .result-row-val { color: var(--green); }
+    .btn-edit{background:rgba(0,61,165,.08);color:var(--blue);}
+    .btn-del{background:rgba(225,27,34,.08);color:var(--red);}
+    .btn-edit:active,.btn-del:active{opacity:.7;}
 
-    /* ── FINAL CARD ── */
-    .final-card {
-      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 50%, var(--blue-mid) 100%);
-      border-radius: var(--radius);
-      padding: 28px 24px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-      margin-top: 4px;
-      animation: fadeUp .5s .15s ease both;
-    }
-    .final-card::before {
-      content: '';
-      position: absolute;
-      width: 200px;height:200px;border-radius:50%;
-      background: rgba(255,255,255,.06);
-      top:-60px;right:-40px;
-    }
-    .final-card-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.65);
-      margin-bottom: 10px;
-    }
-    .final-card-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 40px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-      text-shadow: 0 2px 12px rgba(0,0,0,.2);
-    }
-    .final-card-euro {
-      font-size: 22px;
-      vertical-align: super;
-      margin-right: 4px;
-      opacity: .8;
-    }
-    .final-card-sub {
-      font-size: 12px;
-      color: rgba(255,255,255,.5);
-      margin-top: 8px;
-    }
-    .final-ribbon {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, var(--red), #ff4b51);
-    }
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+    .empty-state .es-icon{font-size:52px;margin-bottom:12px;}
+    .empty-state p{font-size:14px;font-weight:500;line-height:1.6;}
 
-    /* ── CONFETTI CANVAS ── */
-    #confetti-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 9999;
+    /* ══ MODAL ══ */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(13,27,62,.6);
+      backdrop-filter:blur(4px);z-index:200;
+      display:none;align-items:flex-end;justify-content:center;
     }
+    .modal-overlay.open{display:flex;}
+    .modal{
+      background:var(--surface);border-radius:24px 24px 0 0;
+      width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+      padding:0 0 env(safe-area-inset-bottom);
+      animation:slideUp .3s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
+    .modal-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .modal-title{font-size:17px;font-weight:800;color:var(--text);}
+    .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:4px;-webkit-tap-highlight-color:transparent;}
+    .modal-body{padding:16px 20px;}
+    .form-row{margin-bottom:14px;}
+    .form-row label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+    .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .btn-save{
+      width:100%;padding:16px;margin-top:8px;margin-bottom:16px;
+      background:linear-gradient(135deg,var(--blue-dark),var(--blue));
+      color:#fff;border:none;border-radius:var(--radius-sm);
+      font-family:'Sora',sans-serif;font-size:15px;font-weight:800;
+      cursor:pointer;-webkit-tap-highlight-color:transparent;
+      box-shadow:0 6px 20px rgba(0,61,165,.3);transition:transform .15s;
+    }
+    .btn-save:active{transform:scale(.98);}
 
-    /* ── RESET BUTTON ── */
-    .btn-reset {
-      width: 100%;
-      padding: 14px;
-      background: transparent;
-      color: var(--muted);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-family: 'Sora', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-      transition: all .2s;
-      -webkit-tap-highlight-color: transparent;
+    /* ══ PAGE 3 — DASHBOARD ══ */
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+    .kpi-card{
+      background:var(--surface);border-radius:var(--radius);
+      padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);
     }
-    .btn-reset:active { background: var(--bg); }
+    .kpi-icon{font-size:22px;margin-bottom:6px;}
+    .kpi-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+    .kpi-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--text);}
+    .kpi-value.blue{color:var(--blue);}
+    .kpi-value.green{color:var(--green);}
+    .kpi-value.red{color:var(--red);}
+    .kpi-value.orange{color:var(--orange);}
+    .chart-card{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border);}
+    .chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;}
+    .chart-wrap{position:relative;height:200px;}
 
-    /* ── FOOTER ── */
-    .app-footer {
-      text-align: center;
-      padding: 24px 0 8px;
-      font-size: 11px;
-      color: var(--muted);
-      opacity: .7;
+    /* ══ TOAST ══ */
+    .toast{
+      position:fixed;bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+      left:50%;transform:translateX(-50%) translateY(20px);
+      background:var(--text);color:#fff;padding:10px 20px;
+      border-radius:100px;font-size:13px;font-weight:600;
+      opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:300;
+      white-space:nowrap;
     }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* ══ LOADING ══ */
+    .loading-bar{height:3px;background:linear-gradient(90deg,var(--blue),var(--red));position:fixed;top:0;left:0;right:0;z-index:400;display:none;animation:loadpulse 1.2s infinite;}
+    @keyframes loadpulse{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+    .loading-bar.visible{display:block;}
+
+    .app-footer{text-align:center;padding:20px 0 8px;font-size:11px;color:var(--muted);opacity:.6;}
+
+    #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+
+    /* filter bar */
+    .filter-bar{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;scrollbar-width:none;}
+    .filter-bar::-webkit-scrollbar{display:none;}
+    .filter-chip{
+      padding:6px 14px;border-radius:100px;border:1.5px solid var(--border);
+      background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);
+      cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;
+      transition:all .18s;flex-shrink:0;
+    }
+    .filter-chip.active{border-color:var(--blue);background:rgba(0,61,165,.07);color:var(--blue);}
   </style>
 </head>
 <body>
 
+<div class="loading-bar" id="loadingBar"></div>
 <canvas id="confetti-canvas"></canvas>
+<div class="toast" id="toast"></div>
 
-<!-- HEADER -->
-<header class="app-header">
-  <div class="header-pill"><span></span>RE/MAX Portugal</div>
-  <h1 class="header-title">Calculadora<br>da <em>Jéssica</em> 🏠</h1>
-  <p class="header-sub">Comissões imobiliárias · Atualizado 2025</p>
-</header>
+<!-- ══════════════════════════════════
+     PAGE 1 — CALCULADORA
+══════════════════════════════════ -->
+<div class="page active" id="page-calc">
+  <header class="app-header">
+    <div class="header-pill"><span></span>RE/MAX Portugal</div>
+    <h1 class="header-title">Calculadora<br>da <em>Jéssica</em> 🏠</h1>
+    <p class="header-sub">Comissões imobiliárias · 2025</p>
+  </header>
+  <main class="container">
 
-<!-- MAIN -->
-<main class="container">
-
-  <!-- VALOR DA VENDA -->
-  <div class="card">
-    <div class="field-label"><span class="icon">💶</span> Valor da Venda</div>
-    <div class="input-wrap">
-      <span class="input-prefix">€</span>
-      <input
-        id="valorInput"
-        class="value-input"
-        type="text"
-        inputmode="numeric"
-        placeholder="0"
-        autocomplete="off"
-        autocorrect="off"
-        spellcheck="false"
-      />
-    </div>
-  </div>
-
-  <!-- COMISSÃO DA AGÊNCIA -->
-  <div class="card">
-    <div class="field-label"><span class="icon">🏢</span> Comissão da Agência</div>
-    <div class="select-wrap">
-      <select id="comissaoSelect">
-        <option value="5">5%</option>
-        <option value="4">4%</option>
-        <option value="3">3%</option>
-        <option value="outros">Outros</option>
-      </select>
-    </div>
-    <input
-      id="outrosInput"
-      class="outros-input"
-      type="number"
-      inputmode="decimal"
-      placeholder="Ex: 6,5"
-      min="0"
-      max="100"
-      step="0.1"
-    />
-  </div>
-
-  <!-- ESCALÃO -->
-  <div class="card">
-    <div class="field-label"><span class="icon">📊</span> Escalão RE/MAX</div>
-    <div class="escalao-row">
-      <div class="escalao-badge" id="escalaoLabel">40%</div>
-      <input
-        id="escalaoSlider"
-        type="range"
-        min="0" max="70" step="1" value="40"
-      />
-    </div>
-  </div>
-
-  <!-- PAPEL NO NEGÓCIO -->
-  <div class="card">
-    <div class="field-label"><span class="icon">🤝</span> Papel no Negócio</div>
-    <div class="toggle-group">
-      <button class="toggle-btn active" id="btnTotal" onclick="setPapel('total')">
-        <span class="t-icon">🌟</span>
-        Total<br><small style="font-weight:400;font-size:11px">Angariação + Venda</small>
-      </button>
-      <button class="toggle-btn" id="btnPartilha" onclick="setPapel('partilha')">
-        <span class="t-icon">🤲</span>
-        Partilha<br><small style="font-weight:400;font-size:11px">50% do negócio</small>
-      </button>
-    </div>
-  </div>
-
-  <!-- INTERMEDIAÇÃO DE CRÉDITO -->
-  <div class="card">
-    <div class="field-label"><span class="icon">💳</span> Intermediação de Crédito</div>
-    <label class="check-row" onclick="toggleCheck()">
-      <div class="check-box" id="checkBox">
-        <span class="check-icon">✓</span>
+    <div class="card">
+      <div class="field-label">💶 Valor da Venda</div>
+      <div class="input-wrap">
+        <span class="input-prefix">€</span>
+        <input id="valorInput" class="value-input" type="text" inputmode="numeric" placeholder="0" autocomplete="off" />
       </div>
-      <div>
-        <div class="check-label">Houve intermediação de crédito?</div>
-        <div class="check-sub">Calcula 0,3% sobre o montante de crédito</div>
+    </div>
+
+    <div class="card">
+      <div class="field-label">🏢 Comissão da Agência</div>
+      <div class="select-wrap">
+        <select id="comissaoSelect">
+          <option value="5">5%</option>
+          <option value="4">4%</option>
+          <option value="3">3%</option>
+          <option value="outros">Outros</option>
+        </select>
       </div>
-    </label>
+      <input id="outrosInput" class="outros-input" type="number" inputmode="decimal" placeholder="Ex: 6,5" min="0" max="100" step="0.1" />
+    </div>
 
-    <!-- Painel expandido só visível quando checkbox ativa -->
-    <div class="credito-panel" id="creditoPanel">
+    <div class="card">
+      <div class="field-label">📊 Escalão RE/MAX</div>
+      <div class="escalao-row">
+        <div class="escalao-badge" id="escalaoLabel">40%</div>
+        <input id="escalaoSlider" type="range" min="0" max="70" step="1" value="40" />
+      </div>
+    </div>
 
-      <!-- Base do cálculo -->
-      <div class="credito-row">
-        <span class="credito-row-label">Base de cálculo</span>
-        <div class="credito-base-toggle">
-          <button class="base-btn active" id="btnBaseVenda" onclick="setBaseCredito('venda')">= Valor Venda</button>
-          <button class="base-btn" id="btnBaseCustom" onclick="setBaseCredito('custom')">Personalizado</button>
+    <div class="card">
+      <div class="field-label">🤝 Papel no Negócio</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnTotal" onclick="setPapel('total')">
+          <span class="t-icon">🌟</span>Total<br><small style="font-weight:400;font-size:11px">Angariação + Venda</small>
+        </button>
+        <button class="toggle-btn" id="btnPartilha" onclick="setPapel('partilha')">
+          <span class="t-icon">🤲</span>Partilha<br><small style="font-weight:400;font-size:11px">50% do negócio</small>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field-label">💳 Intermediação de Crédito</div>
+      <label class="check-row" onclick="toggleCheck()">
+        <div class="check-box" id="checkBox"><span class="check-icon">✓</span></div>
+        <div>
+          <div class="check-label">Houve intermediação de crédito?</div>
+          <div class="check-sub">Calcula 0,3% sobre o montante de crédito</div>
+        </div>
+      </label>
+      <div class="credito-panel" id="creditoPanel">
+        <div class="credito-row">
+          <span class="credito-row-label">Base de cálculo</span>
+          <div class="credito-base-toggle">
+            <button class="base-btn active" id="btnBaseVenda" onclick="setBaseCredito('venda')">= Valor Venda</button>
+            <button class="base-btn" id="btnBaseCustom" onclick="setBaseCredito('custom')">Personalizado</button>
+          </div>
+        </div>
+        <div class="credito-custom-wrap" id="creditoCustomWrap">
+          <div class="input-wrap" style="margin-bottom:0">
+            <span class="input-prefix">€</span>
+            <input id="creditoValorInput" class="value-input" style="font-size:18px;padding:12px 16px 12px 44px" type="text" inputmode="numeric" placeholder="0" autocomplete="off" />
+          </div>
+        </div>
+        <div class="credito-preview">
+          <span>0,3% de <span id="previewBase">—</span></span>
+          <strong id="previewVal">0,00 €</strong>
         </div>
       </div>
+    </div>
 
-      <!-- Input do valor personalizado -->
-      <div class="credito-custom-wrap" id="creditoCustomWrap">
-        <div class="input-wrap" style="margin-bottom:0">
-          <span class="input-prefix">€</span>
-          <input
-            id="creditoValorInput"
-            class="value-input"
-            style="font-size:20px;padding:14px 16px 14px 44px"
-            type="text"
-            inputmode="numeric"
-            placeholder="0"
-            autocomplete="off"
-          />
-        </div>
-      </div>
+    <button class="btn-calc" onclick="calcular()">✨ &nbsp;Calcular Ganho Final</button>
 
-      <!-- Linha de resultado preview -->
-      <div class="credito-preview" id="creditoPreview">
-        <span>0,3% de <span id="previewBase">—</span></span>
-        <strong id="previewVal">0,00 €</strong>
+    <section class="results-section" id="resultsSection">
+      <p class="results-title">📋 Resumo dos Ganhos</p>
+      <div class="result-row">
+        <span class="result-row-label">🏠 Ganho Imobiliário</span>
+        <span class="result-row-val" id="valImob">—</span>
       </div>
+      <div class="result-row credit" id="rowCredito" style="display:none">
+        <span class="result-row-label">💳 Intermediação (0,3%)</span>
+        <span class="result-row-val" id="valCredito">—</span>
+      </div>
+      <div class="final-card">
+        <div class="final-card-label">💰 Valor a Receber</div>
+        <div class="final-card-value"><span class="final-card-euro">€</span><span id="valTotal">0</span></div>
+        <div class="final-card-sub" id="finalSub"></div>
+        <div class="final-ribbon"></div>
+      </div>
+      <button class="btn-reset" onclick="resetar()">↺ &nbsp;Novo Cálculo</button>
+    </section>
+
+    <div class="app-footer">RE/MAX Calc · Criado com 💙 para a Jéssica</div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 2 — NEGÓCIOS
+══════════════════════════════════ -->
+<div class="page" id="page-negocios">
+  <header class="page-header">
+    <h1 class="page-header-title">📋 Negócios</h1>
+    <p class="page-header-sub" id="negSubtitle">A carregar...</p>
+  </header>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-chip active" onclick="setFilter('todos',this)">Todos</button>
+    <button class="filter-chip" onclick="setFilter('2026',this)">2026</button>
+    <button class="filter-chip" onclick="setFilter('2025',this)">2025</button>
+    <button class="filter-chip" onclick="setFilter('Total',this)">Total</button>
+    <button class="filter-chip" onclick="setFilter('Partilha',this)">Partilha</button>
+  </div>
+
+  <div class="container" id="negociosList">
+    <div class="empty-state">
+      <div class="es-icon">🏠</div>
+      <p>Ainda não há negócios registados.<br>Toca no <strong>+</strong> para adicionar o primeiro!</p>
     </div>
   </div>
 
-  <!-- BOTÃO CALCULAR -->
-  <button class="btn-calc" id="btnCalc" onclick="calcular()">
-    ✨ &nbsp;Calcular Ganho Final
+  <button class="fab" id="fabBtn" onclick="openModal()">+</button>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 3 — DASHBOARD
+══════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <header class="page-header">
+    <h1 class="page-header-title">📊 Dashboard</h1>
+    <p class="page-header-sub">Análise dos teus negócios</p>
+  </header>
+  <div class="container">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-label">Total Ganho</div><div class="kpi-value green" id="kpiTotal">—</div></div>
+      <div class="kpi-card"><div class="kpi-icon">🏠</div><div class="kpi-label">Negócios</div><div class="kpi-value blue" id="kpiCount">—</div></div>
+      <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-label">Média / Negócio</div><div class="kpi-value orange" id="kpiMedia">—</div></div>
+      <div class="kpi-card"><div class="kpi-icon">🏆</div><div class="kpi-label">Melhor Mês</div><div class="kpi-value red" id="kpiBest">—</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">📅 Evolução Mensal (€ ganhos)</div>
+      <div class="chart-wrap"><canvas id="chartMensal"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">🎯 Origem dos Clientes</div>
+      <div class="chart-wrap" style="height:160px"><canvas id="chartOrigens"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">🏘️ Negócios por Tipologia</div>
+      <div class="chart-wrap" style="height:160px"><canvas id="chartTipos"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">📍 Top Localizações</div>
+      <div id="chartLocais"></div>
+    </div>
+
+    <div class="app-footer">RE/MAX Calc · Criado com 💙 para a Jéssica</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     BOTTOM NAV
+══════════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-calc" onclick="showPage('calc')">
+    <span class="nav-icon">🧮</span>
+    <span class="nav-label">Calculadora</span>
   </button>
+  <button class="nav-btn" id="nav-negocios" onclick="showPage('negocios')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Negócios</span>
+  </button>
+  <button class="nav-btn" id="nav-dashboard" onclick="showPage('dashboard')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Dashboard</span>
+  </button>
+</nav>
 
-  <!-- RESULTADOS -->
-  <section class="results-section" id="resultsSection">
-    <p class="results-title">📋 Resumo dos Ganhos</p>
-
-    <div class="result-row" id="rowImob">
-      <span class="result-row-label">🏠 Ganho Imobiliário</span>
-      <span class="result-row-val" id="valImob">—</span>
+<!-- ══════════════════════════════════
+     MODAL — ADICIONAR/EDITAR
+══════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Novo Negócio</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId" value="" />
 
-    <div class="result-row credit" id="rowCredito" style="display:none">
-      <span class="result-row-label">💳 Intermediação (0,3%)</span>
-      <span class="result-row-val" id="valCredito">—</span>
-    </div>
-
-    <div class="final-card" id="finalCard">
-      <div class="final-card-label">💰 Valor a Receber</div>
-      <div class="final-card-value">
-        <span class="final-card-euro">€</span><span id="valTotal">0</span>
+      <div class="form-row">
+        <label>Data</label>
+        <input type="date" class="std-input" id="fData" />
       </div>
-      <div class="final-card-sub" id="finalSub"></div>
-      <div class="final-ribbon"></div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Tipologia 1</label>
+          <div class="select-wrap">
+            <select class="std-input" id="fTipo1" style="padding:13px 36px 13px 12px">
+              <option>Apartamento</option>
+              <option>Moradia</option>
+              <option>Terreno</option>
+              <option>Comercial</option>
+              <option>Garagem</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Tipologia 2</label>
+          <div class="select-wrap">
+            <select class="std-input" id="fTipo2" style="padding:13px 36px 13px 12px">
+              <option>T1</option>
+              <option>T2</option>
+              <option>T3</option>
+              <option>T4</option>
+              <option>T5+</option>
+              <option>N/A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Localização</label>
+        <input type="text" class="std-input" id="fLocal" placeholder="Ex: Palmeira, Braga" />
+      </div>
+      <div class="form-row">
+        <label>Valor de Venda (€)</label>
+        <input type="text" class="std-input" id="fValor" inputmode="numeric" placeholder="Ex: 250.000" />
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Tipo de Negócio</label>
+          <div class="select-wrap">
+            <select class="std-input" id="fTipoNeg" style="padding:13px 36px 13px 12px">
+              <option>Partilha</option>
+              <option>Total</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Origem Cliente</label>
+          <input type="text" class="std-input" id="fOrigem" placeholder="Ex: Amigos" />
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>% Comissão Total</label>
+          <input type="number" class="std-input" id="fPercTotal" placeholder="5" step="0.1" min="0" max="100" />
+        </div>
+        <div class="form-row">
+          <label>% Comissão Agente</label>
+          <input type="number" class="std-input" id="fPercAgente" placeholder="40" step="1" min="0" max="100" />
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Comissão Agência (€)</label>
+          <input type="text" class="std-input" id="fComAgencia" inputmode="numeric" placeholder="Auto" />
+        </div>
+        <div class="form-row">
+          <label>Comissão Jéssica (€)</label>
+          <input type="text" class="std-input" id="fComJessica" inputmode="numeric" placeholder="Auto" style="border-color:var(--green)" />
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="salvarNegocio()">💾 &nbsp;Guardar Negócio</button>
     </div>
+  </div>
+</div>
 
-    <button class="btn-reset" onclick="resetar()">↺ &nbsp;Novo Cálculo</button>
-  </section>
+<!-- ══════════════════════════════════
+     FIREBASE + APP JS
+══════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <div class="app-footer">RE/MAX Calc · Criado com 💙 para a Jéssica</div>
+const firebaseConfig = {
+  apiKey: "AIzaSyALorSLP5f33avTmglZ5tXiWjo985OsiYs",
+  authDomain: "comissaojr00.firebaseapp.com",
+  projectId: "comissaojr00",
+  storageBucket: "comissaojr00.firebasestorage.app",
+  messagingSenderId: "42347683313",
+  appId: "1:42347683313:web:54533eedf9279994bb7850"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
 
-</main>
+/* ── GLOBALS ── */
+let papel = 'total', creditoAtivo = false, baseCredito = 'venda';
+let allNegocios = [], editingId = null, activeFilter = 'todos';
+let chartMensal = null, chartOrigens = null, chartTipos = null;
 
-<script>
-  /* ── STATE ── */
-  let papel = 'total';
-  let creditoAtivo = false;
-  let baseCredito = 'venda'; // 'venda' | 'custom'
+/* ── UTILS ── */
+function formatPT(v) {
+  return (v||0).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function parsePT(s) {
+  return parseFloat((s||'').toString().replace(/\./g,'').replace(',','.')) || 0;
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+function loading(on) {
+  document.getElementById('loadingBar').classList.toggle('visible', on);
+}
 
-  /* ── FORMATO PT ── */
-  function formatPT(v) {
-    return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  /* ── VALOR INPUT: formato automático ── */
-  const valorInput = document.getElementById('valorInput');
-  valorInput.addEventListener('input', function () {
-    const raw = this.value.replace(/\D/g, '');
-    if (raw === '') { this.value = ''; return; }
-    const num = parseInt(raw, 10);
-    this.value = num.toLocaleString('pt-PT');
-    updateCreditoPreview();
+/* ── FORMAT INPUT ── */
+function fmtNumInput(el) {
+  el.addEventListener('input', function() {
+    const raw = this.value.replace(/\D/g,'');
+    if (!raw) { this.value=''; return; }
+    this.value = parseInt(raw,10).toLocaleString('pt-PT');
   });
+}
 
-  /* ── COMISSÃO SELECT ── */
-  const comissaoSelect = document.getElementById('comissaoSelect');
-  const outrosInput    = document.getElementById('outrosInput');
-  comissaoSelect.addEventListener('change', function () {
-    if (this.value === 'outros') {
-      outrosInput.classList.add('visible');
-      outrosInput.focus();
-    } else {
-      outrosInput.classList.remove('visible');
-    }
+/* ── PAGE NAVIGATION ── */
+window.showPage = function(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'negocios') renderNegocios();
+  if (name === 'dashboard') renderDashboard();
+};
+
+/* ══════════════════════════════════
+   TAB 1 — CALCULADORA
+══════════════════════════════════ */
+const valorInput = document.getElementById('valorInput');
+fmtNumInput(valorInput);
+valorInput.addEventListener('input', updateCreditoPreview);
+
+const comissaoSelect = document.getElementById('comissaoSelect');
+const outrosInput    = document.getElementById('outrosInput');
+comissaoSelect.addEventListener('change', function() {
+  outrosInput.classList.toggle('visible', this.value==='outros');
+  if (this.value==='outros') outrosInput.focus();
+});
+
+const escalaoSlider = document.getElementById('escalaoSlider');
+const escalaoLabel  = document.getElementById('escalaoLabel');
+function updateSlider(v) {
+  escalaoLabel.textContent = v+'%';
+  const pct = (v/70)*100;
+  escalaoSlider.style.background = `linear-gradient(to right,var(--blue) 0%,var(--blue) ${pct}%,var(--border) ${pct}%)`;
+}
+updateSlider(40);
+escalaoSlider.addEventListener('input', function() { updateSlider(this.value); });
+
+window.setPapel = function(p) {
+  papel = p;
+  document.getElementById('btnTotal').classList.toggle('active', p==='total');
+  document.getElementById('btnPartilha').classList.toggle('active', p==='partilha');
+};
+
+window.toggleCheck = function() {
+  creditoAtivo = !creditoAtivo;
+  document.getElementById('checkBox').classList.toggle('checked', creditoAtivo);
+  document.getElementById('creditoPanel').classList.toggle('visible', creditoAtivo);
+  if (creditoAtivo) updateCreditoPreview();
+};
+
+window.setBaseCredito = function(base) {
+  baseCredito = base;
+  document.getElementById('btnBaseVenda').classList.toggle('active', base==='venda');
+  document.getElementById('btnBaseCustom').classList.toggle('active', base==='custom');
+  document.getElementById('creditoCustomWrap').classList.toggle('visible', base==='custom');
+  if (base==='custom') document.getElementById('creditoValorInput').focus();
+  updateCreditoPreview();
+};
+
+const creditoValorInput = document.getElementById('creditoValorInput');
+fmtNumInput(creditoValorInput);
+creditoValorInput.addEventListener('input', updateCreditoPreview);
+
+function getMontanteCredito() {
+  if (baseCredito==='venda') return parsePT(valorInput.value);
+  return parsePT(creditoValorInput.value);
+}
+function updateCreditoPreview() {
+  const m = getMontanteCredito(), g = m*0.003;
+  document.getElementById('previewBase').textContent = formatPT(m)+' €';
+  document.getElementById('previewVal').textContent  = formatPT(g)+' €';
+}
+
+window.calcular = function() {
+  const valorVenda = parsePT(valorInput.value);
+  if (valorVenda<=0) {
+    valorInput.style.borderColor='var(--red)';
+    setTimeout(()=>valorInput.style.borderColor='',1200);
+    return;
+  }
+  const percAgencia = comissaoSelect.value==='outros' ? parseFloat(outrosInput.value)||0 : parseFloat(comissaoSelect.value);
+  const escalao = parseInt(escalaoSlider.value,10);
+  const mult = papel==='total' ? 1 : 0.5;
+  const comissaoBruta    = valorVenda*(percAgencia/100);
+  const baseConsultor    = comissaoBruta*mult;
+  const ganhoImob        = baseConsultor*(escalao/100);
+  const montCredito      = getMontanteCredito();
+  const ganhoCredito     = creditoAtivo ? montCredito*0.003 : 0;
+  const total            = ganhoImob + ganhoCredito;
+
+  document.getElementById('valImob').textContent  = formatPT(ganhoImob)+' €';
+  document.getElementById('valTotal').textContent = formatPT(total);
+  const rowC = document.getElementById('rowCredito');
+  if (creditoAtivo) {
+    rowC.querySelector('.result-row-label').textContent =
+      `💳 Crédito (0,3% de ${baseCredito==='venda'?'valor venda':formatPT(montCredito)+' €'})`;
+    document.getElementById('valCredito').textContent = formatPT(ganhoCredito)+' €';
+    rowC.style.display='flex';
+  } else { rowC.style.display='none'; }
+
+  document.getElementById('finalSub').textContent =
+    `${percAgencia}% comissão · Escalão ${escalao}% · ${papel==='total'?'Total':'Partilha'}`;
+
+  const sec = document.getElementById('resultsSection');
+  sec.classList.add('visible');
+  sec.scrollIntoView({behavior:'smooth',block:'start'});
+  launchConfetti();
+};
+
+window.resetar = function() {
+  document.getElementById('resultsSection').classList.remove('visible');
+  valorInput.value=''; comissaoSelect.value='5';
+  outrosInput.classList.remove('visible');
+  escalaoSlider.value=40; updateSlider(40);
+  setPapel('total');
+  creditoAtivo=false; baseCredito='venda';
+  document.getElementById('checkBox').classList.remove('checked');
+  document.getElementById('creditoPanel').classList.remove('visible');
+  document.getElementById('creditoCustomWrap').classList.remove('visible');
+  document.getElementById('creditoValorInput').value='';
+  document.getElementById('btnBaseVenda').classList.add('active');
+  document.getElementById('btnBaseCustom').classList.remove('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+/* ══════════════════════════════════
+   TAB 2 — NEGÓCIOS
+══════════════════════════════════ */
+async function loadNegocios() {
+  loading(true);
+  try {
+    const q = query(collection(db,'negocios'), orderBy('ts','desc'));
+    const snap = await getDocs(q);
+    allNegocios = snap.docs.map(d => ({id:d.id,...d.data()}));
+  } catch(e) {
+    console.error(e);
+    if (e.code==='permission-denied') toast('⚠️ Acesso negado — verifica as regras do Firestore');
+    else toast('❌ Erro ao carregar dados');
+  }
+  loading(false);
+}
+
+window.setFilter = function(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderNegocios();
+};
+
+function filteredNegocios() {
+  if (activeFilter==='todos') return allNegocios;
+  return allNegocios.filter(n => {
+    if (activeFilter==='Total' || activeFilter==='Partilha') return n.tipoNeg===activeFilter;
+    return (n.data||'').startsWith(activeFilter);
   });
+}
 
-  /* ── ESCALÃO SLIDER ── */
-  const escalaoSlider = document.getElementById('escalaoSlider');
-  const escalaoLabel  = document.getElementById('escalaoLabel');
-  // Init slider fill at 40%
-  (function() {
-    const pct = (40 / 70) * 100;
-    escalaoSlider.style.background =
-      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
-  })();
-  escalaoSlider.addEventListener('input', function () {
-    escalaoLabel.textContent = this.value + '%';
-    const pct = (this.value / 70) * 100;
-    this.style.background =
-      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
+function renderNegocios() {
+  const list = filteredNegocios();
+  const container = document.getElementById('negociosList');
+  document.getElementById('negSubtitle').textContent =
+    `${allNegocios.length} negócio${allNegocios.length!==1?'s':''} registado${allNegocios.length!==1?'s':''}`;
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">🏠</div><p>${activeFilter!=='todos'?'Sem negócios neste filtro.':'Ainda não há negócios registados.<br>Toca no <strong>+</strong> para adicionar o primeiro!'}</p></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map((n,i) => {
+    const jessica = n.comJessica ? formatPT(parseFloat(n.comJessica))+' €' : '—';
+    const agencia = n.comAgencia ? formatPT(parseFloat(n.comAgencia))+' €' : '—';
+    return `
+    <div class="negocio-card" style="animation-delay:${i*0.04}s">
+      <div class="negocio-top">
+        <span class="negocio-tipo">${n.tipo1||''} ${n.tipo2||''} · ${n.tipoNeg||''}</span>
+        <span class="negocio-data">${n.data ? new Date(n.data+'T00:00:00').toLocaleDateString('pt-PT') : '—'}</span>
+      </div>
+      <div class="negocio-local">📍 ${n.local||'—'} &nbsp;·&nbsp; Origem: ${n.origem||'—'}</div>
+      <div class="negocio-vals">
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">Valor Venda</div>
+          <div class="negocio-val-num">${n.valorVenda ? formatPT(parseFloat(n.valorVenda))+' €' : '—'}</div>
+        </div>
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">Comissão Jéssica</div>
+          <div class="negocio-val-num green">${jessica}</div>
+        </div>
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">% Comissão</div>
+          <div class="negocio-val-num">${n.percTotal||'—'}% / ${n.percAgente||'—'}%</div>
+        </div>
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">Comissão Agência</div>
+          <div class="negocio-val-num">${agencia}</div>
+        </div>
+      </div>
+      <div class="negocio-actions">
+        <button class="btn-edit" onclick="openModal('${n.id}')">✏️ Editar</button>
+        <button class="btn-del" onclick="deleteNegocio('${n.id}')">🗑️ Apagar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.openModal = async function(id=null) {
+  editingId = id;
+  document.getElementById('editId').value = id||'';
+  document.getElementById('modalTitle').textContent = id ? 'Editar Negócio' : 'Novo Negócio';
+  // defaults
+  document.getElementById('fData').value = new Date().toISOString().split('T')[0];
+  ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente','fComAgencia','fComJessica'].forEach(f=>{
+    const el = document.getElementById(f);
+    if (el) el.value = '';
   });
+  document.getElementById('fTipoNeg').value = 'Partilha';
 
-  /* ── PAPEL ── */
-  function setPapel(p) {
-    papel = p;
-    document.getElementById('btnTotal').classList.toggle('active', p === 'total');
-    document.getElementById('btnPartilha').classList.toggle('active', p === 'partilha');
-  }
-
-  /* ── CHECKBOX CRÉDITO ── */
-  function toggleCheck() {
-    creditoAtivo = !creditoAtivo;
-    document.getElementById('checkBox').classList.toggle('checked', creditoAtivo);
-    document.getElementById('creditoPanel').classList.toggle('visible', creditoAtivo);
-    if (creditoAtivo) updateCreditoPreview();
-  }
-
-  /* ── BASE CRÉDITO ── */
-  function setBaseCredito(base) {
-    baseCredito = base;
-    document.getElementById('btnBaseVenda').classList.toggle('active', base === 'venda');
-    document.getElementById('btnBaseCustom').classList.toggle('active', base === 'custom');
-    const customWrap = document.getElementById('creditoCustomWrap');
-    if (base === 'custom') {
-      customWrap.classList.add('visible');
-      document.getElementById('creditoValorInput').focus();
-    } else {
-      customWrap.classList.remove('visible');
+  if (id) {
+    const n = allNegocios.find(x=>x.id===id);
+    if (n) {
+      document.getElementById('fData').value        = n.data||'';
+      document.getElementById('fTipo1').value       = n.tipo1||'Apartamento';
+      document.getElementById('fTipo2').value       = n.tipo2||'T1';
+      document.getElementById('fLocal').value       = n.local||'';
+      document.getElementById('fValor').value       = n.valorVenda ? parseInt(n.valorVenda).toLocaleString('pt-PT') : '';
+      document.getElementById('fTipoNeg').value     = n.tipoNeg||'Partilha';
+      document.getElementById('fOrigem').value      = n.origem||'';
+      document.getElementById('fPercTotal').value   = n.percTotal||'';
+      document.getElementById('fPercAgente').value  = n.percAgente||'';
+      document.getElementById('fComAgencia').value  = n.comAgencia ? Math.round(parseFloat(n.comAgencia)).toLocaleString('pt-PT') : '';
+      document.getElementById('fComJessica').value  = n.comJessica ? Math.round(parseFloat(n.comJessica)).toLocaleString('pt-PT') : '';
     }
-    updateCreditoPreview();
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+};
+
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('open');
+};
+window.closeModalOutside = function(e) {
+  if (e.target===document.getElementById('modalOverlay')) closeModal();
+};
+
+window.salvarNegocio = async function() {
+  const valorRaw = parsePT(document.getElementById('fValor').value);
+  if (!valorRaw) { toast('⚠️ Insere o valor de venda'); return; }
+
+  const data = {
+    data:        document.getElementById('fData').value,
+    tipo1:       document.getElementById('fTipo1').value,
+    tipo2:       document.getElementById('fTipo2').value,
+    local:       document.getElementById('fLocal').value.trim(),
+    valorVenda:  valorRaw,
+    tipoNeg:     document.getElementById('fTipoNeg').value,
+    origem:      document.getElementById('fOrigem').value.trim(),
+    percTotal:   parseFloat(document.getElementById('fPercTotal').value)||0,
+    percAgente:  parseFloat(document.getElementById('fPercAgente').value)||0,
+    comAgencia:  parsePT(document.getElementById('fComAgencia').value),
+    comJessica:  parsePT(document.getElementById('fComJessica').value),
+    ts:          serverTimestamp()
+  };
+
+  loading(true);
+  try {
+    if (editingId) {
+      await updateDoc(doc(db,'negocios',editingId), data);
+      toast('✅ Negócio atualizado!');
+    } else {
+      await addDoc(collection(db,'negocios'), data);
+      toast('🎉 Negócio guardado!');
+    }
+    closeModal();
+    await loadNegocios();
+    renderNegocios();
+  } catch(e) { console.error(e); toast('❌ Erro ao guardar'); }
+  loading(false);
+};
+
+window.deleteNegocio = async function(id) {
+  if (!confirm('Tens a certeza que queres apagar este negócio?')) return;
+  loading(true);
+  try {
+    await deleteDoc(doc(db,'negocios',id));
+    toast('🗑️ Negócio apagado');
+    await loadNegocios();
+    renderNegocios();
+  } catch(e) { toast('❌ Erro ao apagar'); }
+  loading(false);
+};
+
+/* Format inputs in modal */
+fmtNumInput(document.getElementById('fValor'));
+fmtNumInput(document.getElementById('fComAgencia'));
+fmtNumInput(document.getElementById('fComJessica'));
+
+/* ══════════════════════════════════
+   TAB 3 — DASHBOARD
+══════════════════════════════════ */
+function renderDashboard() {
+  const negs = allNegocios;
+  if (!negs.length) {
+    document.getElementById('kpiTotal').textContent = '0,00 €';
+    document.getElementById('kpiCount').textContent = '0';
+    document.getElementById('kpiMedia').textContent = '—';
+    document.getElementById('kpiBest').textContent  = '—';
+    return;
   }
 
-  /* ── INPUT CRÉDITO PERSONALIZADO ── */
-  const creditoValorInput = document.getElementById('creditoValorInput');
-  creditoValorInput.addEventListener('input', function () {
-    const raw = this.value.replace(/\D/g, '');
-    if (raw === '') { this.value = ''; updateCreditoPreview(); return; }
-    const num = parseInt(raw, 10);
-    this.value = num.toLocaleString('pt-PT');
-    updateCreditoPreview();
+  const totalGanho = negs.reduce((s,n)=>s+(parseFloat(n.comJessica)||0),0);
+  const media = totalGanho / negs.length;
+  document.getElementById('kpiTotal').textContent = formatPT(totalGanho)+' €';
+  document.getElementById('kpiCount').textContent = negs.length;
+  document.getElementById('kpiMedia').textContent = formatPT(media)+' €';
+
+  // Melhor mês
+  const byMonth = {};
+  negs.forEach(n => {
+    if (!n.data) return;
+    const m = n.data.substring(0,7);
+    byMonth[m] = (byMonth[m]||0)+(parseFloat(n.comJessica)||0);
   });
-
-  /* ── PREVIEW DO CRÉDITO ── */
-  function updateCreditoPreview() {
-    const montante = getMontanteCredito();
-    const ganho = montante * 0.003;
-    document.getElementById('previewBase').textContent = formatPT(montante) + ' €';
-    document.getElementById('previewVal').textContent  = formatPT(ganho) + ' €';
+  const bestEntry = Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
+  if (bestEntry) {
+    const [y,mo] = bestEntry[0].split('-');
+    const label = new Date(y,parseInt(mo)-1).toLocaleDateString('pt-PT',{month:'short',year:'2-digit'});
+    document.getElementById('kpiBest').textContent = label.toUpperCase();
   }
 
-  function getMontanteCredito() {
-    if (baseCredito === 'venda') {
-      const raw = valorInput.value.replace(/\./g, '').replace(/\s/g, '');
-      return parseFloat(raw) || 0;
-    } else {
-      const raw = creditoValorInput.value.replace(/\./g, '').replace(/\s/g, '');
-      return parseFloat(raw) || 0;
-    }
-  }
+  // Gráfico mensal
+  const months = Object.keys(byMonth).sort();
+  const monthLabels = months.map(m => {
+    const [y,mo] = m.split('-');
+    return new Date(y,parseInt(mo)-1).toLocaleDateString('pt-PT',{month:'short'});
+  });
+  const monthVals = months.map(m => Math.round(byMonth[m]*100)/100);
 
-  /* ── CALCULAR ── */
-  function calcular() {
-    const rawValor = valorInput.value.replace(/\./g, '').replace(/\s/g, '');
-    const valorVenda = parseFloat(rawValor) || 0;
-
-    if (valorVenda <= 0) {
-      valorInput.focus();
-      valorInput.style.borderColor = 'var(--red)';
-      setTimeout(() => valorInput.style.borderColor = '', 1200);
-      return;
-    }
-
-    let percAgencia;
-    if (comissaoSelect.value === 'outros') {
-      percAgencia = parseFloat(outrosInput.value) || 0;
-    } else {
-      percAgencia = parseFloat(comissaoSelect.value);
-    }
-
-    const escalao = parseInt(escalaoSlider.value, 10);
-    const multPapel = papel === 'total' ? 1.0 : 0.5;
-
-    const comissaoBruta    = valorVenda * (percAgencia / 100);
-    const baseConsultor    = comissaoBruta * multPapel;
-    const ganhoImobiliario = baseConsultor * (escalao / 100);
-    const montanteCredito  = getMontanteCredito();
-    const ganhoCredito     = creditoAtivo ? montanteCredito * 0.003 : 0;
-    const totalAcumulado   = ganhoImobiliario + ganhoCredito;
-
-    /* Preenche resultados */
-    document.getElementById('valImob').textContent  = formatPT(ganhoImobiliario) + ' €';
-    document.getElementById('valTotal').textContent = formatPT(totalAcumulado);
-
-    const rowCredito = document.getElementById('rowCredito');
-    if (creditoAtivo) {
-      const labelBase = baseCredito === 'venda'
-        ? 'valor da venda'
-        : formatPT(montanteCredito) + ' €';
-      document.getElementById('rowCredito').querySelector('.result-row-label').textContent =
-        `💳 Crédito (0,3% de ${labelBase})`;
-      document.getElementById('valCredito').textContent = formatPT(ganhoCredito) + ' €';
-      rowCredito.style.display = 'flex';
-    } else {
-      rowCredito.style.display = 'none';
-    }
-
-    const papelLabel = papel === 'total' ? 'Total (Ang. + Venda)' : 'Partilha (50%)';
-    document.getElementById('finalSub').textContent =
-      `${percAgencia}% comissão · Escalão ${escalao}% · ${papelLabel}`;
-
-    /* Mostra secção */
-    const sec = document.getElementById('resultsSection');
-    sec.classList.add('visible');
-    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    /* Confetti 🎉 */
-    launchConfetti();
-  }
-
-  /* ── RESET ── */
-  function resetar() {
-    document.getElementById('resultsSection').classList.remove('visible');
-    valorInput.value = '';
-    comissaoSelect.value = '5';
-    outrosInput.classList.remove('visible');
-    escalaoSlider.value = 40;
-    escalaoLabel.textContent = '40%';
-    const pct = (40 / 70) * 100;
-    escalaoSlider.style.background =
-      `linear-gradient(to right, var(--blue) 0%, var(--blue) ${pct}%, var(--border) ${pct}%)`;
-    setPapel('total');
-    creditoAtivo = false;
-    baseCredito = 'venda';
-    document.getElementById('checkBox').classList.remove('checked');
-    document.getElementById('creditoPanel').classList.remove('visible');
-    document.getElementById('creditoCustomWrap').classList.remove('visible');
-    document.getElementById('creditoValorInput').value = '';
-    document.getElementById('btnBaseVenda').classList.add('active');
-    document.getElementById('btnBaseCustom').classList.remove('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  /* ── CONFETTI ── */
-  function launchConfetti() {
-    const canvas  = document.getElementById('confetti-canvas');
-    const ctx     = canvas.getContext('2d');
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const colors = ['#003da5','#e11b22','#ffd166','#06d6a0','#fff','#0050cc'];
-    const pieces = [];
-    const count  = 120;
-
-    for (let i = 0; i < count; i++) {
-      pieces.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height - canvas.height,
-        r: Math.random() * 7 + 4,
-        d: Math.random() * count,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        tilt: Math.floor(Math.random() * 10) - 10,
-        tiltAngle: 0,
-        tiltAngleInc: (Math.random() * 0.07) + 0.05
-      });
-    }
-
-    let angle = 0;
-    let frame = 0;
-    const maxFrames = 200;
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      angle += 0.01;
-      frame++;
-      for (let i = 0; i < pieces.length; i++) {
-        const p = pieces[i];
-        p.tiltAngle += p.tiltAngleInc;
-        p.y += (Math.cos(angle + p.d) + 2.5);
-        p.x += Math.sin(angle) * 1.2;
-        p.tilt = Math.sin(p.tiltAngle) * 12;
-        ctx.beginPath();
-        ctx.lineWidth = p.r / 2;
-        ctx.strokeStyle = p.color;
-        ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
-        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
-        ctx.stroke();
+  if (chartMensal) chartMensal.destroy();
+  chartMensal = new Chart(document.getElementById('chartMensal'), {
+    type:'bar',
+    data:{ labels:monthLabels, datasets:[{
+      label:'Ganhos (€)', data:monthVals,
+      backgroundColor:'rgba(0,61,165,.75)', borderRadius:8,
+      hoverBackgroundColor:'#003da5'
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>formatPT(ctx.parsed.y)+' €'}}},
+      scales:{
+        y:{ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v, font:{size:10}}, grid:{color:'rgba(0,0,0,.05)'}},
+        x:{ticks:{font:{size:10}}, grid:{display:false}}
       }
-      if (frame < maxFrames) {
-        requestAnimationFrame(draw);
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-    draw();
-  }
-
-  /* ── PWA: esconde barra de endereço ── */
-  window.addEventListener('load', () => {
-    if (window.navigator.standalone !== true) {
-      setTimeout(() => window.scrollTo(0, 1), 100);
     }
   });
+
+  // Origens
+  const origens = {};
+  negs.forEach(n=>{const o=n.origem||'Desconhecido';origens[o]=(origens[o]||0)+1;});
+  const oKeys=Object.keys(origens), oVals=oKeys.map(k=>origens[k]);
+  const colors=['#003da5','#e11b22','#ffd166','#00a878','#7c3aed','#f4a231'];
+  if (chartOrigens) chartOrigens.destroy();
+  chartOrigens = new Chart(document.getElementById('chartOrigens'),{
+    type:'doughnut',
+    data:{labels:oKeys,datasets:[{data:oVals,backgroundColor:colors.slice(0,oKeys.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}}
+    }
+  });
+
+  // Tipologias
+  const tipos = {};
+  negs.forEach(n=>{const t=(n.tipo1||'')+(n.tipo2?' '+n.tipo2:'');tipos[t]=(tipos[t]||0)+1;});
+  const tKeys=Object.keys(tipos).sort((a,b)=>tipos[b]-tipos[a]).slice(0,6);
+  const tVals=tKeys.map(k=>tipos[k]);
+  if (chartTipos) chartTipos.destroy();
+  chartTipos = new Chart(document.getElementById('chartTipos'),{
+    type:'bar',
+    data:{labels:tKeys,datasets:[{data:tVals,backgroundColor:'rgba(225,27,34,.75)',borderRadius:8}]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}
+    }
+  });
+
+  // Top localizações
+  const locais = {};
+  negs.forEach(n=>{if(n.local){locais[n.local]=(locais[n.local]||0)+(parseFloat(n.comJessica)||0);}});
+  const locSorted = Object.entries(locais).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const max = locSorted[0]?locSorted[0][1]:1;
+  document.getElementById('chartLocais').innerHTML = locSorted.length
+    ? locSorted.map(([l,v],i)=>`
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:var(--text)">${i+1}. ${l}</span>
+          <span style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--green)">${formatPT(v)} €</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:6px">
+          <div style="background:var(--blue);border-radius:4px;height:6px;width:${(v/max*100).toFixed(0)}%;transition:width .6s ease"></div>
+        </div>
+      </div>`).join('')
+    : '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Sem dados</p>';
+}
+
+/* ══════════════════════════════════
+   CONFETTI
+══════════════════════════════════ */
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const colors=['#003da5','#e11b22','#ffd166','#06d6a0','#fff','#0050cc'];
+  const pieces=[]; const count=120;
+  for(let i=0;i<count;i++) pieces.push({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+    r:Math.random()*7+4, d:Math.random()*count,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    tilt:Math.floor(Math.random()*10)-10, tiltAngle:0, tiltAngleInc:(Math.random()*.07)+.05
+  });
+  let angle=0,frame=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height); angle+=.01; frame++;
+    pieces.forEach(p=>{
+      p.tiltAngle+=p.tiltAngleInc; p.y+=(Math.cos(angle+p.d)+2.5);
+      p.x+=Math.sin(angle)*1.2; p.tilt=Math.sin(p.tiltAngle)*12;
+      ctx.beginPath(); ctx.lineWidth=p.r/2; ctx.strokeStyle=p.color;
+      ctx.moveTo(p.x+p.tilt+p.r/4,p.y); ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/4);
+      ctx.stroke();
+    });
+    if(frame<200) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+/* ── INIT ── */
+window.addEventListener('load', async () => {
+  if (window.navigator.standalone!==true) setTimeout(()=>window.scrollTo(0,1),100);
+  await loadNegocios();
+});
 </script>
 </body>
 </html>
