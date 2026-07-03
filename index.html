@@ -837,10 +837,13 @@
 <!-- ══════════════════════════════════
      FIREBASE + APP JS
 ══════════════════════════════════ -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
+(async function() {
+
+/* ── FIREBASE (dynamic import) ── */
+const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp }
+  = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
 
 const firebaseConfig = {
   apiKey: "AIzaSyALorSLP5f33avTmglZ5tXiWjo985OsiYs",
@@ -857,6 +860,7 @@ const db    = getFirestore(fbApp);
 let papel = 'total', creditoAtivo = false, baseCredito = 'venda';
 let allNegocios = [], editingId = null, activeFilter = 'todos';
 let chartMensal = null, chartOrigens = null, chartTipos = null;
+let modalModoComissao = 'auto', modalModoCredito = 'nao', modalBaseCredito = 'venda';
 
 /* ── UTILS ── */
 function formatPT(v) {
@@ -864,36 +868,40 @@ function formatPT(v) {
 }
 function parsePT(s) {
   if (!s) return 0;
-  const clean = s.toString().trim().replace(/\./g,'').replace(',','.');
-  return parseFloat(clean) || 0;
+  return parseFloat(s.toString().trim().replace(/\./g,'').replace(',','.')) || 0;
+}
+function fmtNum(s) {
+  const raw = s.replace(/\D/g,'');
+  if (!raw) return '';
+  return parseInt(raw,10).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
+function fmtNumInput(el, cb) {
+  el.addEventListener('input', function() {
+    const pos = this.selectionStart;
+    const prev = this.value.length;
+    this.value = fmtNum(this.value);
+    const diff = this.value.length - prev;
+    try { this.setSelectionRange(pos+diff, pos+diff); } catch(e){}
+    if (cb) cb();
+  });
 }
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+  setTimeout(()=>t.classList.remove('show'), 2400);
 }
 function loading(on) {
   document.getElementById('loadingBar').classList.toggle('visible', on);
 }
 
-/* ── FORMAT INPUT — força ponto como separador de milhares ── */
-function fmtNumInput(el, onAfter) {
-  el.addEventListener('input', function() {
-    const raw = this.value.replace(/\D/g,'');
-    if (!raw) { this.value=''; if(onAfter) onAfter(); return; }
-    this.value = parseInt(raw,10).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-    if(onAfter) onAfter();
-  });
-}
-
-/* ── PAGE NAVIGATION ── */
+/* ── NAVIGATION ── */
 window.showPage = function(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
-  if (name === 'negocios') renderNegocios();
-  if (name === 'dashboard') renderDashboard();
+  if (name==='negocios')  renderNegocios();
+  if (name==='dashboard') renderDashboard();
 };
 
 /* ══════════════════════════════════
@@ -902,22 +910,18 @@ window.showPage = function(name) {
 const valorInput = document.getElementById('valorInput');
 fmtNumInput(valorInput, updateCreditoPreview);
 
-const comissaoSelect = document.getElementById('comissaoSelect');
-const outrosInput    = document.getElementById('outrosInput');
-comissaoSelect.addEventListener('change', function() {
-  outrosInput.classList.toggle('visible', this.value==='outros');
-  if (this.value==='outros') outrosInput.focus();
+document.getElementById('comissaoSelect').addEventListener('change', function() {
+  document.getElementById('outrosInput').classList.toggle('visible', this.value==='outros');
 });
 
 const escalaoSlider = document.getElementById('escalaoSlider');
-const escalaoLabel  = document.getElementById('escalaoLabel');
 function updateSlider(v) {
-  escalaoLabel.textContent = v+'%';
+  document.getElementById('escalaoLabel').textContent = v+'%';
   const pct = (v/70)*100;
   escalaoSlider.style.background = `linear-gradient(to right,var(--blue) 0%,var(--blue) ${pct}%,var(--border) ${pct}%)`;
 }
 updateSlider(40);
-escalaoSlider.addEventListener('input', function() { updateSlider(this.value); });
+escalaoSlider.addEventListener('input', function(){ updateSlider(this.value); });
 
 window.setPapel = function(p) {
   papel = p;
@@ -937,51 +941,48 @@ window.setBaseCredito = function(base) {
   document.getElementById('btnBaseVenda').classList.toggle('active', base==='venda');
   document.getElementById('btnBaseCustom').classList.toggle('active', base==='custom');
   document.getElementById('creditoCustomWrap').classList.toggle('visible', base==='custom');
-  if (base==='custom') document.getElementById('creditoValorInput').focus();
   updateCreditoPreview();
 };
 
 const creditoValorInput = document.getElementById('creditoValorInput');
-fmtNumInput(creditoValorInput);
-creditoValorInput.addEventListener('input', updateCreditoPreview);
+fmtNumInput(creditoValorInput, updateCreditoPreview);
 
 function getMontanteCredito() {
   if (baseCredito==='venda') return parsePT(valorInput.value);
   return parsePT(creditoValorInput.value);
 }
 function updateCreditoPreview() {
-  const m = getMontanteCredito(), g = m*0.003;
+  const m = getMontanteCredito();
   document.getElementById('previewBase').textContent = formatPT(m)+' €';
-  document.getElementById('previewVal').textContent  = formatPT(g)+' €';
+  document.getElementById('previewVal').textContent  = formatPT(m*0.003)+' €';
 }
 
 window.calcular = function() {
   const valorVenda = parsePT(valorInput.value);
-  if (valorVenda<=0) {
+  if (!valorVenda) {
     valorInput.style.borderColor='var(--red)';
     setTimeout(()=>valorInput.style.borderColor='',1200);
     return;
   }
-  const percAgencia = comissaoSelect.value==='outros' ? parseFloat(outrosInput.value)||0 : parseFloat(comissaoSelect.value);
-  const escalao = parseInt(escalaoSlider.value,10);
-  const mult = papel==='total' ? 1 : 0.5;
-  const comissaoBruta    = valorVenda*(percAgencia/100);
-  const baseConsultor    = comissaoBruta*mult;
-  const ganhoImob        = baseConsultor*(escalao/100);
-  const montCredito      = getMontanteCredito();
-  const ganhoCredito     = creditoAtivo ? montCredito*0.003 : 0;
-  const total            = ganhoImob + ganhoCredito;
+  const sel = document.getElementById('comissaoSelect');
+  const percAgencia = sel.value==='outros'
+    ? parseFloat(document.getElementById('outrosInput').value)||0
+    : parseFloat(sel.value);
+  const escalao   = parseInt(escalaoSlider.value,10);
+  const mult      = papel==='total' ? 1 : 0.5;
+  const comBruta  = valorVenda*(percAgencia/100);
+  const base      = comBruta*mult;
+  const ganhoImob = base*(escalao/100);
+  const ganhoCredit = creditoAtivo ? getMontanteCredito()*0.003 : 0;
+  const total     = ganhoImob + ganhoCredit;
 
   document.getElementById('valImob').textContent  = formatPT(ganhoImob)+' €';
   document.getElementById('valTotal').textContent = formatPT(total);
-  const rowC = document.getElementById('rowCredito');
+  const rc = document.getElementById('rowCredito');
   if (creditoAtivo) {
-    rowC.querySelector('.result-row-label').textContent =
-      `💳 Crédito (0,3% de ${baseCredito==='venda'?'valor venda':formatPT(montCredito)+' €'})`;
-    document.getElementById('valCredito').textContent = formatPT(ganhoCredito)+' €';
-    rowC.style.display='flex';
-  } else { rowC.style.display='none'; }
-
+    document.getElementById('valCredito').textContent = formatPT(ganhoCredit)+' €';
+    rc.style.display='flex';
+  } else { rc.style.display='none'; }
   document.getElementById('finalSub').textContent =
     `${percAgencia}% comissão · Escalão ${escalao}% · ${papel==='total'?'Total':'Partilha'}`;
 
@@ -993,15 +994,16 @@ window.calcular = function() {
 
 window.resetar = function() {
   document.getElementById('resultsSection').classList.remove('visible');
-  valorInput.value=''; comissaoSelect.value='5';
-  outrosInput.classList.remove('visible');
+  valorInput.value='';
+  document.getElementById('comissaoSelect').value='5';
+  document.getElementById('outrosInput').classList.remove('visible');
   escalaoSlider.value=40; updateSlider(40);
   setPapel('total');
   creditoAtivo=false; baseCredito='venda';
   document.getElementById('checkBox').classList.remove('checked');
   document.getElementById('creditoPanel').classList.remove('visible');
   document.getElementById('creditoCustomWrap').classList.remove('visible');
-  document.getElementById('creditoValorInput').value='';
+  creditoValorInput.value='';
   document.getElementById('btnBaseVenda').classList.add('active');
   document.getElementById('btnBaseCustom').classList.remove('active');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1015,10 +1017,10 @@ async function loadNegocios() {
   try {
     const q = query(collection(db,'negocios'), orderBy('ts','desc'));
     const snap = await getDocs(q);
-    allNegocios = snap.docs.map(d => ({id:d.id,...d.data()}));
+    allNegocios = snap.docs.map(d=>({id:d.id,...d.data()}));
   } catch(e) {
     console.error(e);
-    if (e.code==='permission-denied') toast('⚠️ Acesso negado — verifica as regras do Firestore');
+    if (e.code==='permission-denied') toast('⚠️ Acesso negado — verifica Firestore Rules');
     else toast('❌ Erro ao carregar dados');
   }
   loading(false);
@@ -1033,8 +1035,8 @@ window.setFilter = function(f, el) {
 
 function filteredNegocios() {
   if (activeFilter==='todos') return allNegocios;
-  return allNegocios.filter(n => {
-    if (activeFilter==='Total' || activeFilter==='Partilha') return n.tipoNeg===activeFilter;
+  return allNegocios.filter(n=>{
+    if (activeFilter==='Total'||activeFilter==='Partilha') return n.tipoNeg===activeFilter;
     return (n.data||'').startsWith(activeFilter);
   });
 }
@@ -1044,39 +1046,43 @@ function renderNegocios() {
   const container = document.getElementById('negociosList');
   document.getElementById('negSubtitle').textContent =
     `${allNegocios.length} negócio${allNegocios.length!==1?'s':''} registado${allNegocios.length!==1?'s':''}`;
-
   if (!list.length) {
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">🏠</div><p>${activeFilter!=='todos'?'Sem negócios neste filtro.':'Ainda não há negócios registados.<br>Toca no <strong>+</strong> para adicionar o primeiro!'}</p></div>`;
+    container.innerHTML=`<div class="empty-state"><div class="es-icon">🏠</div><p>${activeFilter!=='todos'?'Sem negócios neste filtro.':'Ainda não há negócios.<br>Toca no <strong>+</strong> para adicionar!'}</p></div>`;
     return;
   }
-
-  container.innerHTML = list.map((n,i) => {
-    const jessica = n.comJessica ? formatPT(parseFloat(n.comJessica))+' €' : '—';
-    const agencia = n.comAgencia ? formatPT(parseFloat(n.comAgencia))+' €' : '—';
+  container.innerHTML = list.map((n,i)=>{
+    const jessica = n.comJessica!=null ? formatPT(parseFloat(n.comJessica))+' €' : '—';
+    const agencia = n.comAgencia!=null ? formatPT(parseFloat(n.comAgencia))+' €' : '—';
+    const credito = n.ganhoCredito    ? formatPT(parseFloat(n.ganhoCredito))+' €' : '—';
+    const total   = n.totalGanho      ? formatPT(parseFloat(n.totalGanho))+' €'  : jessica;
     return `
     <div class="negocio-card" style="animation-delay:${i*0.04}s">
       <div class="negocio-top">
         <span class="negocio-tipo">${n.tipo1||''} ${n.tipo2||''} · ${n.tipoNeg||''}</span>
-        <span class="negocio-data">${n.data ? new Date(n.data+'T00:00:00').toLocaleDateString('pt-PT') : '—'}</span>
+        <span class="negocio-data">${n.data?new Date(n.data+'T00:00:00').toLocaleDateString('pt-PT'):'—'}</span>
       </div>
-      <div class="negocio-local">📍 ${n.local||'—'} &nbsp;·&nbsp; Origem: ${n.origem||'—'}</div>
+      <div class="negocio-local">📍 ${n.local||'—'} &nbsp;·&nbsp; ${n.origem||'—'}</div>
       <div class="negocio-vals">
         <div class="negocio-val-box">
           <div class="negocio-val-lbl">Valor Venda</div>
-          <div class="negocio-val-num">${n.valorVenda ? formatPT(parseFloat(n.valorVenda))+' €' : '—'}</div>
-        </div>
-        <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Comissão Jéssica</div>
-          <div class="negocio-val-num green">${jessica}</div>
+          <div class="negocio-val-num">${n.valorVenda?formatPT(parseFloat(n.valorVenda))+' €':'—'}</div>
         </div>
         <div class="negocio-val-box">
           <div class="negocio-val-lbl">Comissão Agência</div>
           <div class="negocio-val-num">${agencia}</div>
         </div>
         <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Crédito (0,3%)</div>
-          <div class="negocio-val-num" style="color:var(--green)">${n.ganhoCredito ? formatPT(parseFloat(n.ganhoCredito))+' €' : '—'}</div>
+          <div class="negocio-val-lbl">Comissão Jéssica</div>
+          <div class="negocio-val-num" style="color:var(--green)">${jessica}</div>
         </div>
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">Crédito</div>
+          <div class="negocio-val-num" style="color:var(--green)">${credito}</div>
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--blue-dark),var(--blue));border-radius:8px;padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em">Total a Receber</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#fff">${total}</span>
       </div>
       <div class="negocio-actions">
         <button class="btn-edit" onclick="openModal('${n.id}')">✏️ Editar</button>
@@ -1086,11 +1092,7 @@ function renderNegocios() {
   }).join('');
 }
 
-/* ══ MODAL STATE ══ */
-let modalModoComissao = 'auto';
-let modalModoCredito  = 'nao';
-let modalBaseCredito  = 'venda';
-
+/* ── MODAL ── */
 window.setModoComissao = function(modo) {
   modalModoComissao = modo;
   document.getElementById('swAutoBtn').classList.toggle('active', modo==='auto');
@@ -1113,20 +1115,18 @@ window.setModalBaseCredito = function(base) {
   document.getElementById('mBtnBaseVenda').classList.toggle('active', base==='venda');
   document.getElementById('mBtnBaseCustom').classList.toggle('active', base==='custom');
   document.getElementById('modalCreditoCustomWrap').style.display = base==='custom' ? 'block' : 'none';
-  if (base==='custom') document.getElementById('fCreditoValor').focus();
   calcModalCreditoPreview();
 };
 
 function calcModalComissoes() {
-  if (modalModoComissao !== 'auto') return;
+  if (modalModoComissao!=='auto') return;
   const valor     = parsePT(document.getElementById('fValor').value);
-  const percTotal = parseFloat(document.getElementById('fPercTotal').value) || 0;
-  const percAg    = parseFloat(document.getElementById('fPercAgente').value) || 0;
-  const tipoNeg   = document.getElementById('fTipoNeg').value;
-  const mult      = tipoNeg==='Total' ? 1 : 0.5;
-  const comBruta  = valor * (percTotal/100);
-  const comAg     = comBruta / 2;
-  const comJess   = comBruta * mult * (percAg/100);
+  const percTotal = parseFloat(document.getElementById('fPercTotal').value)||0;
+  const percAg    = parseFloat(document.getElementById('fPercAgente').value)||0;
+  const mult      = document.getElementById('fTipoNeg').value==='Total' ? 1 : 0.5;
+  const comBruta  = valor*(percTotal/100);
+  const comAg     = comBruta/2;
+  const comJess   = comBruta*mult*(percAg/100);
   document.getElementById('fComAgenciaAuto').textContent = valor&&percTotal ? formatPT(comAg)+' €' : '—';
   document.getElementById('fComJessicaAuto').textContent = valor&&percTotal&&percAg ? formatPT(comJess)+' €' : '—';
   calcModalCreditoPreview();
@@ -1136,31 +1136,28 @@ function getModalMontanteCredito() {
   if (modalBaseCredito==='venda') return parsePT(document.getElementById('fValor').value);
   return parsePT(document.getElementById('fCreditoValor').value);
 }
+
 function getPercCredito() {
-  return parseFloat(document.getElementById('fPercCredito').value) || 0.3;
-}
-function calcModalCreditoPreview() {
-  const m = getModalMontanteCredito();
-  const p = getPercCredito();
-  const perc = p.toLocaleString('pt-PT', {minimumFractionDigits:1, maximumFractionDigits:2});
-  if(document.getElementById('mPreviewPerc')) document.getElementById('mPreviewPerc').textContent = perc;
-  document.getElementById('mPreviewBase').textContent = formatPT(m)+' €';
-  document.getElementById('mPreviewVal').textContent  = formatPT(m*(p/100))+' €';
+  return parseFloat(document.getElementById('fPercCredito').value)||0.3;
 }
 
-fmtNumInput(document.getElementById('fValor'), function() {
-  calcModalComissoes();
-  calcModalCreditoPreview();
-});
+function calcModalCreditoPreview() {
+  const m = getModalMontanteCredito(), p = getPercCredito();
+  document.getElementById('mPreviewBase').textContent = formatPT(m)+' €';
+  document.getElementById('mPreviewVal').textContent  = formatPT(m*(p/100))+' €';
+  const percEl = document.getElementById('mPreviewPerc');
+  if (percEl) percEl.textContent = p.toString().replace('.',',');
+}
+
+/* Wire up modal inputs */
+const fValorEl = document.getElementById('fValor');
+fmtNumInput(fValorEl, ()=>{ calcModalComissoes(); calcModalCreditoPreview(); });
 fmtNumInput(document.getElementById('fComAgencia'));
 fmtNumInput(document.getElementById('fComJessica'));
 fmtNumInput(document.getElementById('fCreditoValor'), calcModalCreditoPreview);
-
-// Outros triggers (percentagens e tipo negócio)
-['fPercTotal','fPercAgente'].forEach(id =>
+['fPercTotal','fPercAgente'].forEach(id=>
   document.getElementById(id).addEventListener('input', calcModalComissoes));
 document.getElementById('fTipoNeg').addEventListener('change', calcModalComissoes);
-document.getElementById('fCreditoValor').addEventListener('input', calcModalCreditoPreview);
 document.getElementById('fPercCredito').addEventListener('input', calcModalCreditoPreview);
 
 window.openModal = function(id=null) {
@@ -1169,13 +1166,12 @@ window.openModal = function(id=null) {
   document.getElementById('modalTitle').textContent = id ? 'Editar Negócio' : 'Novo Negócio';
   document.getElementById('fData').value    = new Date().toISOString().split('T')[0];
   document.getElementById('fTipoNeg').value = 'Partilha';
+  document.getElementById('fPercCredito').value = '0.3';
   ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente',
    'fComAgencia','fComJessica','fCreditoValor'].forEach(f=>{
     const el=document.getElementById(f); if(el) el.value='';
   });
-  setModoComissao('auto');
-  setModoCredito('nao');
-  document.getElementById('fPercCredito').value = 0.3;
+  setModoComissao('auto'); setModoCredito('nao');
   document.getElementById('mBtnBaseVenda').classList.add('active');
   document.getElementById('mBtnBaseCustom').classList.remove('active');
   document.getElementById('modalCreditoCustomWrap').style.display='none';
@@ -1191,21 +1187,26 @@ window.openModal = function(id=null) {
       document.getElementById('fLocal').value      = n.local||'';
       document.getElementById('fOrigem').value     = n.origem||'';
       document.getElementById('fTipoNeg').value    = n.tipoNeg||'Partilha';
-      document.getElementById('fValor').value      = n.valorVenda ? Math.round(n.valorVenda).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
       document.getElementById('fPercTotal').value  = n.percTotal||'';
       document.getElementById('fPercAgente').value = n.percAgente||'';
+      document.getElementById('fValor').value      = n.valorVenda
+        ? Math.round(n.valorVenda).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
       if (n.override) {
         setModoComissao('manual');
-        document.getElementById('fComAgencia').value = n.comAgencia ? Math.round(n.comAgencia).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
-        document.getElementById('fComJessica').value = n.comJessica ? Math.round(n.comJessica).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';      } else {
+        document.getElementById('fComAgencia').value = n.comAgencia
+          ? Math.round(n.comAgencia).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
+        document.getElementById('fComJessica').value = n.comJessica
+          ? Math.round(n.comJessica).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
+      } else {
         setModoComissao('auto'); calcModalComissoes();
       }
       if (n.ganhoCredito) {
         setModoCredito('sim');
-        document.getElementById('fPercCredito').value = n.percCredito || 0.3;
+        document.getElementById('fPercCredito').value = n.percCredito||0.3;
         if (n.creditoBase==='custom') {
           setModalBaseCredito('custom');
-          document.getElementById('fCreditoValor').value = n.creditoValor ? Math.round(n.creditoValor).toLocaleString('pt-PT'):'';
+          document.getElementById('fCreditoValor').value = n.creditoValor
+            ? Math.round(n.creditoValor).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
         }
         calcModalCreditoPreview();
       }
@@ -1214,8 +1215,12 @@ window.openModal = function(id=null) {
   document.getElementById('modalOverlay').classList.add('open');
 };
 
-window.closeModal = function() { document.getElementById('modalOverlay').classList.remove('open'); };
-window.closeModalOutside = function(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); };
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('open');
+};
+window.closeModalOutside = function(e) {
+  if (e.target===document.getElementById('modalOverlay')) closeModal();
+};
 
 window.salvarNegocio = async function() {
   const valorRaw = parsePT(document.getElementById('fValor').value);
@@ -1233,26 +1238,28 @@ window.salvarNegocio = async function() {
     comAgencia = parsePT(document.getElementById('fComAgencia').value);
     comJessica = parsePT(document.getElementById('fComJessica').value);
   }
-  const percCredito  = getPercCredito();
+  const percCred     = getPercCredito();
   const montCredito  = getModalMontanteCredito();
-  const ganhoCredito = modalModoCredito==='sim' ? montCredito*(percCredito/100) : 0;
-  const data = {
-    data: document.getElementById('fData').value,
-    tipo1: document.getElementById('fTipo1').value,
-    tipo2: document.getElementById('fTipo2').value,
-    local: document.getElementById('fLocal').value.trim(),
-    valorVenda: valorRaw, tipoNeg,
-    origem: document.getElementById('fOrigem').value.trim(),
+  const ganhoCredito = modalModoCredito==='sim' ? montCredito*(percCred/100) : 0;
+  const dataObj = {
+    data:        document.getElementById('fData').value,
+    tipo1:       document.getElementById('fTipo1').value,
+    tipo2:       document.getElementById('fTipo2').value,
+    local:       document.getElementById('fLocal').value.trim(),
+    valorVenda:  valorRaw, tipoNeg,
+    origem:      document.getElementById('fOrigem').value.trim(),
     percTotal, percAgente: percAg,
     comAgencia, comJessica,
-    override: modalModoComissao==='manual',
-    ganhoCredito, percCredito, creditoBase: modalBaseCredito, creditoValor: montCredito,
-    totalGanho: comJessica+ganhoCredito, ts: serverTimestamp()
+    override:    modalModoComissao==='manual',
+    ganhoCredito, percCredito: percCred,
+    creditoBase: modalBaseCredito, creditoValor: montCredito,
+    totalGanho:  comJessica+ganhoCredito,
+    ts:          serverTimestamp()
   };
   loading(true);
   try {
-    if (editingId) { await updateDoc(doc(db,'negocios',editingId),data); toast('✅ Negócio atualizado!'); }
-    else           { await addDoc(collection(db,'negocios'),data);       toast('🎉 Negócio guardado!'); }
+    if (editingId) { await updateDoc(doc(db,'negocios',editingId),dataObj); toast('✅ Negócio atualizado!'); }
+    else           { await addDoc(collection(db,'negocios'),dataObj);        toast('🎉 Negócio guardado!'); }
     closeModal(); await loadNegocios(); renderNegocios();
   } catch(e) { console.error(e); toast('❌ Erro ao guardar'); }
   loading(false);
@@ -1275,121 +1282,93 @@ window.deleteNegocio = async function(id) {
 function renderDashboard() {
   const negs = allNegocios;
   if (!negs.length) {
-    document.getElementById('kpiTotal').textContent = '0,00 €';
-    document.getElementById('kpiCount').textContent = '0';
-    document.getElementById('kpiMedia').textContent = '—';
-    document.getElementById('kpiBest').textContent  = '—';
+    ['kpiTotal','kpiCount','kpiMedia','kpiBest'].forEach(id=>
+      document.getElementById(id).textContent='—');
     return;
   }
-
   const totalGanho = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
-  const media = totalGanho / negs.length;
+  const media = totalGanho/negs.length;
   document.getElementById('kpiTotal').textContent = formatPT(totalGanho)+' €';
   document.getElementById('kpiCount').textContent = negs.length;
   document.getElementById('kpiMedia').textContent = formatPT(media)+' €';
 
-  // Melhor mês
   const byMonth = {};
-  negs.forEach(n => {
+  negs.forEach(n=>{
     if (!n.data) return;
     const m = n.data.substring(0,7);
-    byMonth[m] = (byMonth[m]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);
+    byMonth[m]=(byMonth[m]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);
   });
-  const bestEntry = Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
-  if (bestEntry) {
-    const [y,mo] = bestEntry[0].split('-');
-    const label = new Date(y,parseInt(mo)-1).toLocaleDateString('pt-PT',{month:'short',year:'2-digit'});
-    document.getElementById('kpiBest').textContent = label.toUpperCase();
-  }
-
-  // Gráfico mensal
   const months = Object.keys(byMonth).sort();
-  const monthLabels = months.map(m => {
-    const [y,mo] = m.split('-');
-    return new Date(y,parseInt(mo)-1).toLocaleDateString('pt-PT',{month:'short'});
-  });
-  const monthVals = months.map(m => Math.round(byMonth[m]*100)/100);
+  const bestMonth = months.reduce((a,b)=>byMonth[a]>byMonth[b]?a:b, months[0]);
+  document.getElementById('kpiBest').textContent = bestMonth
+    ? new Date(bestMonth+'-01').toLocaleDateString('pt-PT',{month:'short',year:'2-digit'})
+    : '—';
+
+  const labels = months.map(m=>new Date(m+'-01').toLocaleDateString('pt-PT',{month:'short',year:'2-digit'}));
+  const values = months.map(m=>byMonth[m]);
 
   if (chartMensal) chartMensal.destroy();
-  chartMensal = new Chart(document.getElementById('chartMensal'), {
+  chartMensal = new Chart(document.getElementById('chartMensal'),{
     type:'bar',
-    data:{ labels:monthLabels, datasets:[{
-      label:'Ganhos (€)', data:monthVals,
-      backgroundColor:'rgba(0,61,165,.75)', borderRadius:8,
-      hoverBackgroundColor:'#003da5'
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>formatPT(ctx.parsed.y)+' €'}}},
-      scales:{
-        y:{ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v, font:{size:10}}, grid:{color:'rgba(0,0,0,.05)'}},
-        x:{ticks:{font:{size:10}}, grid:{display:false}}
-      }
-    }
+    data:{labels,datasets:[{label:'Ganhos (€)',data:values,
+      backgroundColor:'rgba(0,61,165,.7)',borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>formatPT(v)+' €'},grid:{color:'rgba(0,0,0,.05)'}},
+              x:{grid:{display:false}}}}
   });
 
-  // Origens
-  const origens = {};
-  negs.forEach(n=>{const o=n.origem||'Desconhecido';origens[o]=(origens[o]||0)+1;});
-  const oKeys=Object.keys(origens), oVals=oKeys.map(k=>origens[k]);
-  const colors=['#003da5','#e11b22','#ffd166','#00a878','#7c3aed','#f4a231'];
+  const origens={};
+  negs.forEach(n=>{ if(n.origem) origens[n.origem]=(origens[n.origem]||0)+1; });
   if (chartOrigens) chartOrigens.destroy();
   chartOrigens = new Chart(document.getElementById('chartOrigens'),{
     type:'doughnut',
-    data:{labels:oKeys,datasets:[{data:oVals,backgroundColor:colors.slice(0,oKeys.length),borderWidth:2,borderColor:'#fff'}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}}
-    }
+    data:{labels:Object.keys(origens),datasets:[{data:Object.values(origens),
+      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc'],
+      borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',
+      labels:{font:{size:11},padding:10}}}}
   });
 
-  // Tipologias
-  const tipos = {};
-  negs.forEach(n=>{const t=(n.tipo1||'')+(n.tipo2?' '+n.tipo2:'');tipos[t]=(tipos[t]||0)+1;});
-  const tKeys=Object.keys(tipos).sort((a,b)=>tipos[b]-tipos[a]).slice(0,6);
-  const tVals=tKeys.map(k=>tipos[k]);
+  const tipos={};
+  negs.forEach(n=>{ const k=(n.tipo1||'?')+' '+(n.tipo2||''); tipos[k]=(tipos[k]||0)+1; });
   if (chartTipos) chartTipos.destroy();
   chartTipos = new Chart(document.getElementById('chartTipos'),{
-    type:'bar',
-    data:{labels:tKeys,datasets:[{data:tVals,backgroundColor:'rgba(225,27,34,.75)',borderRadius:8}]},
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}
-    }
+    type:'doughnut',
+    data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),
+      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed'],
+      borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',
+      labels:{font:{size:11},padding:10}}}}
   });
 
-  // Top localizações
-  const locais = {};
-  negs.forEach(n=>{if(n.local){locais[n.local]=(locais[n.local]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);}});
-  const locSorted = Object.entries(locais).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const max = locSorted[0]?locSorted[0][1]:1;
-  document.getElementById('chartLocais').innerHTML = locSorted.length
-    ? locSorted.map(([l,v],i)=>`
-      <div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:12px;font-weight:600;color:var(--text)">${i+1}. ${l}</span>
-          <span style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--green)">${formatPT(v)} €</span>
+  const locais={};
+  negs.forEach(n=>{if(n.local) locais[n.local]=(locais[n.local]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);});
+  const topLocais = Object.entries(locais).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxVal = topLocais[0]?.[1]||1;
+  document.getElementById('chartLocais').innerHTML = topLocais.length
+    ? topLocais.map(([loc,val])=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="font-weight:600">${loc}</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--blue)">${formatPT(val)} €</span>
         </div>
         <div style="background:var(--border);border-radius:4px;height:6px">
-          <div style="background:var(--blue);border-radius:4px;height:6px;width:${(v/max*100).toFixed(0)}%;transition:width .6s ease"></div>
+          <div style="background:var(--blue);height:6px;border-radius:4px;width:${(val/maxVal*100).toFixed(1)}%;transition:width .5s"></div>
         </div>
       </div>`).join('')
     : '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Sem dados</p>';
 }
 
-/* ══════════════════════════════════
-   CONFETTI
-══════════════════════════════════ */
+/* ── CONFETTI ── */
 function launchConfetti() {
   const canvas = document.getElementById('confetti-canvas');
   const ctx = canvas.getContext('2d');
   canvas.width=window.innerWidth; canvas.height=window.innerHeight;
   const colors=['#003da5','#e11b22','#ffd166','#06d6a0','#fff','#0050cc'];
-  const pieces=[]; const count=120;
-  for(let i=0;i<count;i++) pieces.push({
+  const pieces=[];
+  for(let i=0;i<120;i++) pieces.push({
     x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
-    r:Math.random()*7+4, d:Math.random()*count,
+    r:Math.random()*7+4, d:Math.random()*120,
     color:colors[Math.floor(Math.random()*colors.length)],
     tilt:Math.floor(Math.random()*10)-10, tiltAngle:0, tiltAngleInc:(Math.random()*.07)+.05
   });
@@ -1410,10 +1389,10 @@ function launchConfetti() {
 }
 
 /* ── INIT ── */
-window.addEventListener('load', async () => {
-  if (window.navigator.standalone!==true) setTimeout(()=>window.scrollTo(0,1),100);
-  await loadNegocios();
-});
+if (window.navigator.standalone!==true) setTimeout(()=>window.scrollTo(0,1),100);
+await loadNegocios();
+
+})();
 </script>
 </body>
 </html>
