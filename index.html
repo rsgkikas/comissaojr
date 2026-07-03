@@ -626,14 +626,49 @@
     <p class="page-header-sub">Análise dos teus negócios</p>
   </header>
   <div class="container">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-label">Total Ganho</div><div class="kpi-value green" id="kpiTotal">—</div></div>
-      <div class="kpi-card"><div class="kpi-icon">🏠</div><div class="kpi-label">Negócios</div><div class="kpi-value blue" id="kpiCount">—</div></div>
-      <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-label">Média / Negócio</div><div class="kpi-value orange" id="kpiMedia">—</div></div>
-      <div class="kpi-card"><div class="kpi-icon">🏆</div><div class="kpi-label">Melhor Mês</div><div class="kpi-value red" id="kpiBest">—</div></div>
+
+    <!-- IRS TOGGLE -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow)">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Desconto IRS (23%)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Aplica a todos os valores da Jéssica</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer">
+        <input type="checkbox" id="irsToggle" onchange="renderDashboard()" style="opacity:0;width:0;height:0">
+        <span id="irsSlider" style="position:absolute;inset:0;background:var(--border);border-radius:13px;transition:.3s;"></span>
+        <span id="irsKnob" style="position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+      </label>
     </div>
 
-    <div class="chart-card">
+    <!-- KPI GRID — linha 1: Total Ganho + Reporting -->
+    <div class="kpi-grid" style="margin-bottom:10px">
+      <div class="kpi-card" style="border-top:3px solid var(--green)">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Total Ganho <span id="irsLabel" style="font-size:9px;background:rgba(0,168,120,.12);color:var(--green);padding:2px 6px;border-radius:100px;display:none">s/ IRS</span></div>
+        <div class="kpi-value green" id="kpiTotal">—</div>
+      </div>
+      <div class="kpi-card" style="border-top:3px solid var(--blue)">
+        <div class="kpi-icon">🏢</div>
+        <div class="kpi-label">Reporting Agência</div>
+        <div class="kpi-value blue" id="kpiReporting">—</div>
+      </div>
+    </div>
+
+    <!-- KPI GRID — linha 2: Negócios + Média -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">🏠</div>
+        <div class="kpi-label">Negócios</div>
+        <div class="kpi-value blue" id="kpiCount">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-label">Média / Negócio <span id="irsLabelMedia" style="font-size:9px;background:rgba(244,162,49,.15);color:var(--orange);padding:2px 6px;border-radius:100px;display:none">s/ IRS</span></div>
+        <div class="kpi-value orange" id="kpiMedia">—</div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-top:14px">
       <div class="chart-title">📅 Evolução Mensal (€ ganhos)</div>
       <div class="chart-wrap"><canvas id="chartMensal"></canvas></div>
     </div>
@@ -806,18 +841,26 @@
 
         <!-- PAINEL FINANCIAMENTO (visível só quando "Sim") -->
         <div id="creditoPanelModal" style="display:none;animation:slideDown .2s ease">
-          <!-- Base de cálculo -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-size:12px;font-weight:600;color:var(--muted)">Base de cálculo</span>
-            <div class="switcher" style="background:var(--bg)">
-              <button class="sw-btn active" id="mBtnBaseVenda" onclick="setModalBaseCredito('venda')" style="font-size:11px;padding:5px 10px">= Valor Venda</button>
-              <button class="sw-btn" id="mBtnBaseCustom" onclick="setModalBaseCredito('custom')" style="font-size:11px;padding:5px 10px">Personalizado</button>
+
+          <!-- % do valor de venda -->
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;font-weight:600;color:var(--muted)">% do Valor de Venda financiado</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" id="fPercFinanciado" value="90" min="0" max="100" step="1"
+                  style="width:64px;padding:6px 8px;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;border:2px solid var(--blue);border-radius:8px;text-align:center;background:var(--surface);color:var(--blue);outline:none" />
+                <span style="font-size:14px;font-weight:700;color:var(--blue)">%</span>
+              </div>
+            </div>
+            <!-- Preview valor financiado -->
+            <div style="background:rgba(0,61,165,.06);border:1.5px solid rgba(0,61,165,.15);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="font-size:11px;font-weight:600;color:var(--muted)">Montante financiado</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--blue)" id="mPreviewFinanciado">—</span>
             </div>
           </div>
-          <div id="modalCreditoCustomWrap" style="display:none;margin-bottom:10px;animation:slideDown .2s ease">
-            <input type="text" class="std-input" id="fCreditoValor" inputmode="numeric" placeholder="Ex: 200.000" />
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+
+          <!-- % comissão crédito -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap">% Comissão crédito</span>
             <input type="number" class="std-input" id="fPercCredito" value="0.3" step="0.05" min="0" max="5"
               style="max-width:90px;padding:8px 10px;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace" />
@@ -1110,13 +1153,29 @@ window.setModoCredito = function(modo) {
   if (modo==='sim') calcModalCreditoPreview();
 };
 
-window.setModalBaseCredito = function(base) {
-  modalBaseCredito = base;
-  document.getElementById('mBtnBaseVenda').classList.toggle('active', base==='venda');
-  document.getElementById('mBtnBaseCustom').classList.toggle('active', base==='custom');
-  document.getElementById('modalCreditoCustomWrap').style.display = base==='custom' ? 'block' : 'none';
-  calcModalCreditoPreview();
-};
+function getModalMontanteCredito() {
+  const valorVenda = parsePT(document.getElementById('fValor').value);
+  const percFin    = parseFloat(document.getElementById('fPercFinanciado').value)||90;
+  return valorVenda * (percFin/100);
+}
+
+function getPercCredito() {
+  return parseFloat(document.getElementById('fPercCredito').value)||0.3;
+}
+
+function calcModalCreditoPreview() {
+  const valorVenda  = parsePT(document.getElementById('fValor').value);
+  const percFin     = parseFloat(document.getElementById('fPercFinanciado')||{value:90}).value||90;
+  const montante    = valorVenda*(percFin/100);
+  const p           = getPercCredito();
+  const ganho       = montante*(p/100);
+  const finEl = document.getElementById('mPreviewFinanciado');
+  if (finEl) finEl.textContent = montante>0 ? formatPT(montante)+' €' : '—';
+  document.getElementById('mPreviewBase').textContent = formatPT(montante)+' €';
+  document.getElementById('mPreviewVal').textContent  = formatPT(ganho)+' €';
+  const percEl = document.getElementById('mPreviewPerc');
+  if (percEl) percEl.textContent = p.toString().replace('.',',');
+}
 
 function calcModalComissoes() {
   if (modalModoComissao!=='auto') return;
@@ -1132,33 +1191,16 @@ function calcModalComissoes() {
   calcModalCreditoPreview();
 }
 
-function getModalMontanteCredito() {
-  if (modalBaseCredito==='venda') return parsePT(document.getElementById('fValor').value);
-  return parsePT(document.getElementById('fCreditoValor').value);
-}
-
-function getPercCredito() {
-  return parseFloat(document.getElementById('fPercCredito').value)||0.3;
-}
-
-function calcModalCreditoPreview() {
-  const m = getModalMontanteCredito(), p = getPercCredito();
-  document.getElementById('mPreviewBase').textContent = formatPT(m)+' €';
-  document.getElementById('mPreviewVal').textContent  = formatPT(m*(p/100))+' €';
-  const percEl = document.getElementById('mPreviewPerc');
-  if (percEl) percEl.textContent = p.toString().replace('.',',');
-}
-
 /* Wire up modal inputs */
 const fValorEl = document.getElementById('fValor');
 fmtNumInput(fValorEl, ()=>{ calcModalComissoes(); calcModalCreditoPreview(); });
 fmtNumInput(document.getElementById('fComAgencia'));
 fmtNumInput(document.getElementById('fComJessica'));
-fmtNumInput(document.getElementById('fCreditoValor'), calcModalCreditoPreview);
 ['fPercTotal','fPercAgente'].forEach(id=>
   document.getElementById(id).addEventListener('input', calcModalComissoes));
 document.getElementById('fTipoNeg').addEventListener('change', calcModalComissoes);
 document.getElementById('fPercCredito').addEventListener('input', calcModalCreditoPreview);
+document.getElementById('fPercFinanciado').addEventListener('input', calcModalCreditoPreview);
 
 window.openModal = function(id=null) {
   editingId = id;
@@ -1166,9 +1208,10 @@ window.openModal = function(id=null) {
   document.getElementById('modalTitle').textContent = id ? 'Editar Negócio' : 'Novo Negócio';
   document.getElementById('fData').value    = new Date().toISOString().split('T')[0];
   document.getElementById('fTipoNeg').value = 'Partilha';
-  document.getElementById('fPercCredito').value = '0.3';
+  document.getElementById('fPercCredito').value    = '0.3';
+  document.getElementById('fPercFinanciado').value = '90';
   ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente',
-   'fComAgencia','fComJessica','fCreditoValor'].forEach(f=>{
+   'fComAgencia','fComJessica'].forEach(f=>{
     const el=document.getElementById(f); if(el) el.value='';
   });
   setModoComissao('auto'); setModoCredito('nao');
@@ -1202,12 +1245,8 @@ window.openModal = function(id=null) {
       }
       if (n.ganhoCredito) {
         setModoCredito('sim');
-        document.getElementById('fPercCredito').value = n.percCredito||0.3;
-        if (n.creditoBase==='custom') {
-          setModalBaseCredito('custom');
-          document.getElementById('fCreditoValor').value = n.creditoValor
-            ? Math.round(n.creditoValor).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
-        }
+        document.getElementById('fPercCredito').value    = n.percCredito||0.3;
+        document.getElementById('fPercFinanciado').value = n.percFinanciado||90;
         calcModalCreditoPreview();
       }
     }
@@ -1238,9 +1277,10 @@ window.salvarNegocio = async function() {
     comAgencia = parsePT(document.getElementById('fComAgencia').value);
     comJessica = parsePT(document.getElementById('fComJessica').value);
   }
-  const percCred     = getPercCredito();
-  const montCredito  = getModalMontanteCredito();
-  const ganhoCredito = modalModoCredito==='sim' ? montCredito*(percCred/100) : 0;
+  const percCred      = getPercCredito();
+  const percFin       = parseFloat(document.getElementById('fPercFinanciado').value)||90;
+  const montCredito   = getModalMontanteCredito();
+  const ganhoCredito  = modalModoCredito==='sim' ? montCredito*(percCred/100) : 0;
   const dataObj = {
     data:        document.getElementById('fData').value,
     tipo1:       document.getElementById('fTipo1').value,
@@ -1251,8 +1291,8 @@ window.salvarNegocio = async function() {
     percTotal, percAgente: percAg,
     comAgencia, comJessica,
     override:    modalModoComissao==='manual',
-    ganhoCredito, percCredito: percCred,
-    creditoBase: modalBaseCredito, creditoValor: montCredito,
+    ganhoCredito, percCredito: percCred, percFinanciado: percFin,
+    creditoValor: montCredito,
     totalGanho:  comJessica+ganhoCredito,
     ts:          serverTimestamp()
   };
@@ -1281,29 +1321,54 @@ window.deleteNegocio = async function(id) {
 ══════════════════════════════════ */
 function renderDashboard() {
   const negs = allNegocios;
+  const comIRS = document.getElementById('irsToggle')?.checked || false;
+  const IRS = 0.23;
+
+  // IRS toggle visual
+  const slider = document.getElementById('irsSlider');
+  const knob   = document.getElementById('irsKnob');
+  if (slider) slider.style.background = comIRS ? 'var(--blue)' : 'var(--border)';
+  if (knob)   knob.style.left = comIRS ? '25px' : '3px';
+
+  // Badge labels
+  const irsLabel      = document.getElementById('irsLabel');
+  const irsLabelMedia = document.getElementById('irsLabelMedia');
+  if (irsLabel)      irsLabel.style.display      = comIRS ? 'inline' : 'none';
+  if (irsLabelMedia) irsLabelMedia.style.display = comIRS ? 'inline' : 'none';
+
   if (!negs.length) {
-    ['kpiTotal','kpiCount','kpiMedia','kpiBest'].forEach(id=>
-      document.getElementById(id).textContent='—');
+    ['kpiTotal','kpiReporting','kpiCount','kpiMedia'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.textContent='—';
+    });
     return;
   }
-  const totalGanho = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
-  const media = totalGanho/negs.length;
-  document.getElementById('kpiTotal').textContent = formatPT(totalGanho)+' €';
-  document.getElementById('kpiCount').textContent = negs.length;
-  document.getElementById('kpiMedia').textContent = formatPT(media)+' €';
 
+  // Total Ganho Jéssica (comJessica + ganhoCredito)
+  const totalBruto = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
+  const totalLiq   = comIRS ? totalBruto*(1-IRS) : totalBruto;
+  document.getElementById('kpiTotal').textContent = formatPT(totalLiq)+' €';
+
+  // Reporting — soma das comissões da agência
+  const totalAgencia = negs.reduce((s,n)=>s+(parseFloat(n.comAgencia)||0),0);
+  document.getElementById('kpiReporting').textContent = formatPT(totalAgencia)+' €';
+
+  // Nº negócios
+  document.getElementById('kpiCount').textContent = negs.length;
+
+  // Média por negócio
+  const mediaBruta = totalBruto / negs.length;
+  const mediaLiq   = comIRS ? mediaBruta*(1-IRS) : mediaBruta;
+  document.getElementById('kpiMedia').textContent = formatPT(mediaLiq)+' €';
+
+  // Gráfico mensal (com ou sem IRS)
   const byMonth = {};
   negs.forEach(n=>{
     if (!n.data) return;
     const m = n.data.substring(0,7);
-    byMonth[m]=(byMonth[m]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);
+    const v = parseFloat(n.totalGanho||n.comJessica)||0;
+    byMonth[m] = (byMonth[m]||0) + (comIRS ? v*(1-IRS) : v);
   });
   const months = Object.keys(byMonth).sort();
-  const bestMonth = months.reduce((a,b)=>byMonth[a]>byMonth[b]?a:b, months[0]);
-  document.getElementById('kpiBest').textContent = bestMonth
-    ? new Date(bestMonth+'-01').toLocaleDateString('pt-PT',{month:'short',year:'2-digit'})
-    : '—';
-
   const labels = months.map(m=>new Date(m+'-01').toLocaleDateString('pt-PT',{month:'short',year:'2-digit'}));
   const values = months.map(m=>byMonth[m]);
 
@@ -1311,12 +1376,13 @@ function renderDashboard() {
   chartMensal = new Chart(document.getElementById('chartMensal'),{
     type:'bar',
     data:{labels,datasets:[{label:'Ganhos (€)',data:values,
-      backgroundColor:'rgba(0,61,165,.7)',borderRadius:6,borderSkipped:false}]},
+      backgroundColor:'rgba(0,61,165,.75)',borderRadius:6,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
       scales:{y:{ticks:{callback:v=>formatPT(v)+' €'},grid:{color:'rgba(0,0,0,.05)'}},
               x:{grid:{display:false}}}}
   });
 
+  // Origens
   const origens={};
   negs.forEach(n=>{ if(n.origem) origens[n.origem]=(origens[n.origem]||0)+1; });
   if (chartOrigens) chartOrigens.destroy();
@@ -1329,6 +1395,7 @@ function renderDashboard() {
       labels:{font:{size:11},padding:10}}}}
   });
 
+  // Tipologias
   const tipos={};
   negs.forEach(n=>{ const k=(n.tipo1||'?')+' '+(n.tipo2||''); tipos[k]=(tipos[k]||0)+1; });
   if (chartTipos) chartTipos.destroy();
@@ -1341,8 +1408,13 @@ function renderDashboard() {
       labels:{font:{size:11},padding:10}}}}
   });
 
+  // Top localizações
   const locais={};
-  negs.forEach(n=>{if(n.local) locais[n.local]=(locais[n.local]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);});
+  negs.forEach(n=>{
+    if (!n.local) return;
+    const v = parseFloat(n.totalGanho||n.comJessica)||0;
+    locais[n.local]=(locais[n.local]||0)+(comIRS ? v*(1-IRS) : v);
+  });
   const topLocais = Object.entries(locais).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxVal = topLocais[0]?.[1]||1;
   document.getElementById('chartLocais').innerHTML = topLocais.length
@@ -1358,6 +1430,7 @@ function renderDashboard() {
       </div>`).join('')
     : '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Sem dados</p>';
 }
+window.renderDashboard = renderDashboard;
 
 /* ── CONFETTI ── */
 function launchConfetti() {
