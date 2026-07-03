@@ -384,6 +384,12 @@
       box-shadow:0 6px 20px rgba(0,61,165,.3);transition:transform .15s;
     }
     .btn-save:active{transform:scale(.98);}
+    .auto-val-box{
+      font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
+      color:var(--text);background:var(--surface);border:1.5px solid var(--border);
+      border-radius:8px;padding:10px 12px;min-height:40px;
+    }
+    .auto-val-box.green{color:var(--green);border-color:rgba(0,168,120,.3);}
 
     /* ══ PAGE 3 — DASHBOARD ══ */
     .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
@@ -645,6 +651,7 @@
     <div class="modal-body">
       <input type="hidden" id="editId" value="" />
 
+      <!-- DATA + TIPOLOGIAS -->
       <div class="form-row">
         <label>Data</label>
         <input type="date" class="std-input" id="fData" />
@@ -654,12 +661,8 @@
           <label>Tipologia 1</label>
           <div class="select-wrap">
             <select class="std-input" id="fTipo1" style="padding:13px 36px 13px 12px">
-              <option>Apartamento</option>
-              <option>Moradia</option>
-              <option>Terreno</option>
-              <option>Comercial</option>
-              <option>Garagem</option>
-              <option>Outro</option>
+              <option>Apartamento</option><option>Moradia</option><option>Terreno</option>
+              <option>Comercial</option><option>Garagem</option><option>Outro</option>
             </select>
           </div>
         </div>
@@ -667,57 +670,116 @@
           <label>Tipologia 2</label>
           <div class="select-wrap">
             <select class="std-input" id="fTipo2" style="padding:13px 36px 13px 12px">
-              <option>T1</option>
-              <option>T2</option>
-              <option>T3</option>
-              <option>T4</option>
-              <option>T5+</option>
-              <option>N/A</option>
+              <option>T1</option><option>T2</option><option>T3</option>
+              <option>T4</option><option>T5+</option><option>N/A</option>
             </select>
           </div>
         </div>
       </div>
-      <div class="form-row">
-        <label>Localização</label>
-        <input type="text" class="std-input" id="fLocal" placeholder="Ex: Palmeira, Braga" />
-      </div>
-      <div class="form-row">
-        <label>Valor de Venda (€)</label>
-        <input type="text" class="std-input" id="fValor" inputmode="numeric" placeholder="Ex: 250.000" />
-      </div>
+
+      <!-- LOCALIZAÇÃO + ORIGEM -->
       <div class="form-2col">
         <div class="form-row">
-          <label>Tipo de Negócio</label>
-          <div class="select-wrap">
-            <select class="std-input" id="fTipoNeg" style="padding:13px 36px 13px 12px">
-              <option>Partilha</option>
-              <option>Total</option>
-            </select>
-          </div>
+          <label>Localização</label>
+          <input type="text" class="std-input" id="fLocal" placeholder="Ex: Palmeira" />
         </div>
         <div class="form-row">
           <label>Origem Cliente</label>
           <input type="text" class="std-input" id="fOrigem" placeholder="Ex: Amigos" />
         </div>
       </div>
+
+      <!-- VALOR VENDA + TIPO NEGÓCIO -->
+      <div class="form-2col">
+        <div class="form-row">
+          <label>Valor de Venda (€)</label>
+          <input type="text" class="std-input" id="fValor" inputmode="numeric" placeholder="Ex: 250.000" />
+        </div>
+        <div class="form-row">
+          <label>Tipo de Negócio</label>
+          <div class="select-wrap">
+            <select class="std-input" id="fTipoNeg" style="padding:13px 36px 13px 12px">
+              <option>Partilha</option><option>Total</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- % COMISSÃO TOTAL + % AGENTE -->
       <div class="form-2col">
         <div class="form-row">
           <label>% Comissão Total</label>
           <input type="number" class="std-input" id="fPercTotal" placeholder="5" step="0.1" min="0" max="100" />
         </div>
         <div class="form-row">
-          <label>% Comissão Agente</label>
+          <label>% Escalão Jéssica</label>
           <input type="number" class="std-input" id="fPercAgente" placeholder="40" step="1" min="0" max="100" />
         </div>
       </div>
-      <div class="form-2col">
-        <div class="form-row">
-          <label>Comissão Agência (€)</label>
-          <input type="text" class="std-input" id="fComAgencia" inputmode="numeric" placeholder="Auto" />
+
+      <!-- COMISSÕES AUTO-CALCULADAS -->
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">
+          💡 Comissões Calculadas Automaticamente
         </div>
-        <div class="form-row">
-          <label>Comissão Jéssica (€)</label>
-          <input type="text" class="std-input" id="fComJessica" inputmode="numeric" placeholder="Auto" style="border-color:var(--green)" />
+        <div class="form-2col" style="margin-bottom:10px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Comissão Agência (€)</div>
+            <div class="auto-val-box" id="fComAgenciaAuto">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Comissão Jéssica (€)</div>
+            <div class="auto-val-box green" id="fComJessicaAuto">—</div>
+          </div>
+        </div>
+        <!-- Override manual -->
+        <div style="border-top:1px dashed var(--border);padding-top:10px;">
+          <label onclick="toggleOverride()" style="display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+            <div class="check-box" id="overrideBox" style="width:22px;height:22px;min-width:22px;border-radius:6px"><span class="check-icon" style="font-size:13px">✓</span></div>
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Valor fixo / override manual</span>
+          </label>
+          <div id="overrideFields" style="display:none;margin-top:10px;animation:slideDown .2s ease">
+            <div class="form-2col">
+              <div class="form-row" style="margin-bottom:0">
+                <label>Comissão Agência (€)</label>
+                <input type="text" class="std-input" id="fComAgencia" inputmode="numeric" placeholder="0" />
+              </div>
+              <div class="form-row" style="margin-bottom:0">
+                <label>Comissão Jéssica (€)</label>
+                <input type="text" class="std-input" id="fComJessica" inputmode="numeric" placeholder="0" style="border-color:var(--green)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERMEDIAÇÃO DE CRÉDITO -->
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">
+          💳 Intermediação de Crédito
+        </div>
+        <label onclick="toggleModalCredito()" style="display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:0">
+          <div class="check-box" id="modalCreditoBox" style="width:24px;height:24px;min-width:24px;border-radius:7px"><span class="check-icon">✓</span></div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Houve intermediação de crédito?</div>
+            <div style="font-size:11px;color:var(--muted)">0,3% sobre o montante de crédito</div>
+          </div>
+        </label>
+        <div id="modalCreditoPanel" style="display:none;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);animation:slideDown .2s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Base de cálculo</span>
+            <div style="display:flex;gap:6px">
+              <button class="base-btn active" id="mBtnBaseVenda" onclick="setModalBaseCredito('venda')">= Valor Venda</button>
+              <button class="base-btn" id="mBtnBaseCustom" onclick="setModalBaseCredito('custom')">Personalizado</button>
+            </div>
+          </div>
+          <div id="modalCreditoCustomWrap" style="display:none;margin-bottom:10px;animation:slideDown .2s ease">
+            <input type="text" class="std-input" id="fCreditoValor" inputmode="numeric" placeholder="Ex: 200.000" />
+          </div>
+          <div class="credito-preview">
+            <span>0,3% de <span id="mPreviewBase">—</span></span>
+            <strong id="mPreviewVal">0,00 €</strong>
+          </div>
         </div>
       </div>
 
@@ -960,12 +1022,12 @@ function renderNegocios() {
           <div class="negocio-val-num green">${jessica}</div>
         </div>
         <div class="negocio-val-box">
-          <div class="negocio-val-lbl">% Comissão</div>
-          <div class="negocio-val-num">${n.percTotal||'—'}% / ${n.percAgente||'—'}%</div>
-        </div>
-        <div class="negocio-val-box">
           <div class="negocio-val-lbl">Comissão Agência</div>
           <div class="negocio-val-num">${agencia}</div>
+        </div>
+        <div class="negocio-val-box">
+          <div class="negocio-val-lbl">Crédito (0,3%)</div>
+          <div class="negocio-val-num" style="color:var(--green)">${n.ganhoCredito ? formatPT(parseFloat(n.ganhoCredito))+' €' : '—'}</div>
         </div>
       </div>
       <div class="negocio-actions">
@@ -976,32 +1038,136 @@ function renderNegocios() {
   }).join('');
 }
 
+/* ── MODAL STATE ── */
+let modalOverride = false;
+let modalCreditoAtivo = false;
+let modalBaseCredito = 'venda';
+
+/* ── AUTO-CALC comissões no modal ── */
+function calcModalComissoes() {
+  const valor     = parsePT(document.getElementById('fValor').value);
+  const percTotal = parseFloat(document.getElementById('fPercTotal').value)||0;
+  const percAg    = parseFloat(document.getElementById('fPercAgente').value)||0;
+  const tipoNeg   = document.getElementById('fTipoNeg').value;
+  const mult      = tipoNeg==='Total' ? 1 : 0.5;
+
+  const comBruta   = valor * (percTotal/100);
+  const comAgencia = comBruta / 2; // agência recebe sempre metade
+  const baseJessica = comBruta * mult;
+  const comJessica  = baseJessica * (percAg/100);
+
+  document.getElementById('fComAgenciaAuto').textContent = valor&&percTotal ? formatPT(comAgencia)+' €' : '—';
+  document.getElementById('fComJessicaAuto').textContent = valor&&percTotal&&percAg ? formatPT(comJessica)+' €' : '—';
+
+  // atualiza preview crédito
+  calcModalCreditoPreview();
+}
+
+/* ── OVERRIDE TOGGLE ── */
+window.toggleOverride = function() {
+  modalOverride = !modalOverride;
+  document.getElementById('overrideBox').classList.toggle('checked', modalOverride);
+  document.getElementById('overrideFields').style.display = modalOverride ? 'block' : 'none';
+};
+
+/* ── CRÉDITO MODAL ── */
+window.toggleModalCredito = function() {
+  modalCreditoAtivo = !modalCreditoAtivo;
+  document.getElementById('modalCreditoBox').classList.toggle('checked', modalCreditoAtivo);
+  document.getElementById('modalCreditoPanel').style.display = modalCreditoAtivo ? 'block' : 'none';
+  if (modalCreditoAtivo) calcModalCreditoPreview();
+};
+
+window.setModalBaseCredito = function(base) {
+  modalBaseCredito = base;
+  document.getElementById('mBtnBaseVenda').classList.toggle('active', base==='venda');
+  document.getElementById('mBtnBaseCustom').classList.toggle('active', base==='custom');
+  document.getElementById('modalCreditoCustomWrap').style.display = base==='custom' ? 'block' : 'none';
+  if (base==='custom') document.getElementById('fCreditoValor').focus();
+  calcModalCreditoPreview();
+};
+
+function getModalMontanteCredito() {
+  if (modalBaseCredito==='venda') return parsePT(document.getElementById('fValor').value);
+  return parsePT(document.getElementById('fCreditoValor').value);
+}
+
+function calcModalCreditoPreview() {
+  const m = getModalMontanteCredito(), g = m*0.003;
+  document.getElementById('mPreviewBase').textContent = formatPT(m)+' €';
+  document.getElementById('mPreviewVal').textContent  = formatPT(g)+' €';
+}
+
+/* ── FORMAT INPUTS ── */
+fmtNumInput(document.getElementById('fValor'));
+fmtNumInput(document.getElementById('fComAgencia'));
+fmtNumInput(document.getElementById('fComJessica'));
+fmtNumInput(document.getElementById('fCreditoValor'));
+
+/* listeners para auto-calc */
+['fValor','fPercTotal','fPercAgente','fTipoNeg'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', calcModalComissoes);
+  el.addEventListener('change', calcModalComissoes);
+});
+document.getElementById('fCreditoValor').addEventListener('input', calcModalCreditoPreview);
+
+/* ── OPEN MODAL ── */
 window.openModal = async function(id=null) {
   editingId = id;
-  document.getElementById('editId').value = id||'';
+  modalOverride = false; modalCreditoAtivo = false; modalBaseCredito = 'venda';
+
   document.getElementById('modalTitle').textContent = id ? 'Editar Negócio' : 'Novo Negócio';
-  // defaults
   document.getElementById('fData').value = new Date().toISOString().split('T')[0];
-  ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente','fComAgencia','fComJessica'].forEach(f=>{
-    const el = document.getElementById(f);
-    if (el) el.value = '';
-  });
   document.getElementById('fTipoNeg').value = 'Partilha';
+  ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente','fComAgencia','fComJessica','fCreditoValor'].forEach(f=>{
+    const el=document.getElementById(f); if(el) el.value='';
+  });
+  // reset UI
+  document.getElementById('overrideBox').classList.remove('checked');
+  document.getElementById('overrideFields').style.display='none';
+  document.getElementById('modalCreditoBox').classList.remove('checked');
+  document.getElementById('modalCreditoPanel').style.display='none';
+  document.getElementById('modalCreditoCustomWrap').style.display='none';
+  document.getElementById('mBtnBaseVenda').classList.add('active');
+  document.getElementById('mBtnBaseCustom').classList.remove('active');
+  document.getElementById('fComAgenciaAuto').textContent='—';
+  document.getElementById('fComJessicaAuto').textContent='—';
 
   if (id) {
     const n = allNegocios.find(x=>x.id===id);
     if (n) {
-      document.getElementById('fData').value        = n.data||'';
-      document.getElementById('fTipo1').value       = n.tipo1||'Apartamento';
-      document.getElementById('fTipo2').value       = n.tipo2||'T1';
-      document.getElementById('fLocal').value       = n.local||'';
-      document.getElementById('fValor').value       = n.valorVenda ? parseInt(n.valorVenda).toLocaleString('pt-PT') : '';
-      document.getElementById('fTipoNeg').value     = n.tipoNeg||'Partilha';
-      document.getElementById('fOrigem').value      = n.origem||'';
-      document.getElementById('fPercTotal').value   = n.percTotal||'';
-      document.getElementById('fPercAgente').value  = n.percAgente||'';
-      document.getElementById('fComAgencia').value  = n.comAgencia ? Math.round(parseFloat(n.comAgencia)).toLocaleString('pt-PT') : '';
-      document.getElementById('fComJessica').value  = n.comJessica ? Math.round(parseFloat(n.comJessica)).toLocaleString('pt-PT') : '';
+      document.getElementById('fData').value      = n.data||'';
+      document.getElementById('fTipo1').value     = n.tipo1||'Apartamento';
+      document.getElementById('fTipo2').value     = n.tipo2||'T1';
+      document.getElementById('fLocal').value     = n.local||'';
+      document.getElementById('fValor').value     = n.valorVenda ? Math.round(n.valorVenda).toLocaleString('pt-PT') : '';
+      document.getElementById('fTipoNeg').value   = n.tipoNeg||'Partilha';
+      document.getElementById('fOrigem').value    = n.origem||'';
+      document.getElementById('fPercTotal').value = n.percTotal||'';
+      document.getElementById('fPercAgente').value= n.percAgente||'';
+      // crédito
+      if (n.ganhoCredito) {
+        modalCreditoAtivo = true;
+        document.getElementById('modalCreditoBox').classList.add('checked');
+        document.getElementById('modalCreditoPanel').style.display='block';
+        if (n.creditoBase==='custom' && n.creditoValor) {
+          modalBaseCredito='custom';
+          document.getElementById('mBtnBaseVenda').classList.remove('active');
+          document.getElementById('mBtnBaseCustom').classList.add('active');
+          document.getElementById('modalCreditoCustomWrap').style.display='block';
+          document.getElementById('fCreditoValor').value = Math.round(n.creditoValor).toLocaleString('pt-PT');
+        }
+      }
+      // se tinha override
+      if (n.override) {
+        modalOverride=true;
+        document.getElementById('overrideBox').classList.add('checked');
+        document.getElementById('overrideFields').style.display='block';
+        document.getElementById('fComAgencia').value = n.comAgencia ? Math.round(n.comAgencia).toLocaleString('pt-PT'):'';
+        document.getElementById('fComJessica').value = n.comJessica ? Math.round(n.comJessica).toLocaleString('pt-PT'):'';
+      }
+      calcModalComissoes();
     }
   }
   document.getElementById('modalOverlay').classList.add('open');
@@ -1014,23 +1180,43 @@ window.closeModalOutside = function(e) {
   if (e.target===document.getElementById('modalOverlay')) closeModal();
 };
 
+/* ── GUARDAR ── */
 window.salvarNegocio = async function() {
   const valorRaw = parsePT(document.getElementById('fValor').value);
   if (!valorRaw) { toast('⚠️ Insere o valor de venda'); return; }
 
+  const percTotal = parseFloat(document.getElementById('fPercTotal').value)||0;
+  const percAg    = parseFloat(document.getElementById('fPercAgente').value)||0;
+  const tipoNeg   = document.getElementById('fTipoNeg').value;
+  const mult      = tipoNeg==='Total' ? 1 : 0.5;
+  const comBruta  = valorRaw*(percTotal/100);
+  const autoAgencia = comBruta/2;
+  const autoJessica = comBruta*mult*(percAg/100);
+
+  const comAgencia = modalOverride ? parsePT(document.getElementById('fComAgencia').value) : autoAgencia;
+  const comJessica = modalOverride ? parsePT(document.getElementById('fComJessica').value) : autoJessica;
+
+  const montCredito = getModalMontanteCredito();
+  const ganhoCredito = modalCreditoAtivo ? montCredito*0.003 : 0;
+
   const data = {
-    data:        document.getElementById('fData').value,
-    tipo1:       document.getElementById('fTipo1').value,
-    tipo2:       document.getElementById('fTipo2').value,
-    local:       document.getElementById('fLocal').value.trim(),
-    valorVenda:  valorRaw,
-    tipoNeg:     document.getElementById('fTipoNeg').value,
-    origem:      document.getElementById('fOrigem').value.trim(),
-    percTotal:   parseFloat(document.getElementById('fPercTotal').value)||0,
-    percAgente:  parseFloat(document.getElementById('fPercAgente').value)||0,
-    comAgencia:  parsePT(document.getElementById('fComAgencia').value),
-    comJessica:  parsePT(document.getElementById('fComJessica').value),
-    ts:          serverTimestamp()
+    data:         document.getElementById('fData').value,
+    tipo1:        document.getElementById('fTipo1').value,
+    tipo2:        document.getElementById('fTipo2').value,
+    local:        document.getElementById('fLocal').value.trim(),
+    valorVenda:   valorRaw,
+    tipoNeg,
+    origem:       document.getElementById('fOrigem').value.trim(),
+    percTotal,
+    percAgente:   percAg,
+    comAgencia,
+    comJessica,
+    override:     modalOverride,
+    ganhoCredito,
+    creditoBase:  modalBaseCredito,
+    creditoValor: modalBaseCredito==='custom' ? montCredito : valorRaw,
+    totalGanho:   comJessica + ganhoCredito,
+    ts:           serverTimestamp()
   };
 
   loading(true);
@@ -1061,11 +1247,6 @@ window.deleteNegocio = async function(id) {
   loading(false);
 };
 
-/* Format inputs in modal */
-fmtNumInput(document.getElementById('fValor'));
-fmtNumInput(document.getElementById('fComAgencia'));
-fmtNumInput(document.getElementById('fComJessica'));
-
 /* ══════════════════════════════════
    TAB 3 — DASHBOARD
 ══════════════════════════════════ */
@@ -1079,7 +1260,7 @@ function renderDashboard() {
     return;
   }
 
-  const totalGanho = negs.reduce((s,n)=>s+(parseFloat(n.comJessica)||0),0);
+  const totalGanho = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
   const media = totalGanho / negs.length;
   document.getElementById('kpiTotal').textContent = formatPT(totalGanho)+' €';
   document.getElementById('kpiCount').textContent = negs.length;
@@ -1090,7 +1271,7 @@ function renderDashboard() {
   negs.forEach(n => {
     if (!n.data) return;
     const m = n.data.substring(0,7);
-    byMonth[m] = (byMonth[m]||0)+(parseFloat(n.comJessica)||0);
+    byMonth[m] = (byMonth[m]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);
   });
   const bestEntry = Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
   if (bestEntry) {
@@ -1158,7 +1339,7 @@ function renderDashboard() {
 
   // Top localizações
   const locais = {};
-  negs.forEach(n=>{if(n.local){locais[n.local]=(locais[n.local]||0)+(parseFloat(n.comJessica)||0);}});
+  negs.forEach(n=>{if(n.local){locais[n.local]=(locais[n.local]||0)+(parseFloat(n.totalGanho||n.comJessica)||0);}});
   const locSorted = Object.entries(locais).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const max = locSorted[0]?locSorted[0][1]:1;
   document.getElementById('chartLocais').innerHTML = locSorted.length
