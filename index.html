@@ -864,9 +864,7 @@ function formatPT(v) {
 }
 function parsePT(s) {
   if (!s) return 0;
-  const str = s.toString().trim();
-  // Remove thousand separators (dots) and replace decimal comma with dot
-  const clean = str.replace(/\./g,'').replace(',','.');
+  const clean = s.toString().trim().replace(/\./g,'').replace(',','.');
   return parseFloat(clean) || 0;
 }
 function toast(msg) {
@@ -886,13 +884,6 @@ function fmtNumInput(el, onAfter) {
     this.value = parseInt(raw,10).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
     if(onAfter) onAfter();
   });
-}
-
-/* ── PARSE — lê valor com pontos de milhares ── */
-function parsePT(s) {
-  if (!s) return 0;
-  const clean = s.toString().trim().replace(/\./g,'').replace(',','.');
-  return parseFloat(clean) || 0;
 }
 
 /* ── PAGE NAVIGATION ── */
