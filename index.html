@@ -842,21 +842,38 @@
         <!-- PAINEL FINANCIAMENTO (visível só quando "Sim") -->
         <div id="creditoPanelModal" style="display:none;animation:slideDown .2s ease">
 
-          <!-- % do valor de venda -->
-          <div style="margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:12px;font-weight:600;color:var(--muted)">% do Valor de Venda financiado</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" id="fPercFinanciado" value="90" min="0" max="100" step="1"
-                  style="width:64px;padding:6px 8px;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;border:2px solid var(--blue);border-radius:8px;text-align:center;background:var(--surface);color:var(--blue);outline:none" />
-                <span style="font-size:14px;font-weight:700;color:var(--blue)">%</span>
-              </div>
+          <!-- Switcher % vs Valor direto -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Montante financiado</span>
+            <div class="switcher" style="background:var(--bg)">
+              <button class="sw-btn active" id="swFinPercBtn" style="font-size:11px;padding:5px 12px">% Venda</button>
+              <button class="sw-btn" id="swFinValBtn" style="font-size:11px;padding:5px 12px">Valor direto</button>
             </div>
-            <!-- Preview valor financiado -->
-            <div style="background:rgba(0,61,165,.06);border:1.5px solid rgba(0,61,165,.15);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <span style="font-size:11px;font-weight:600;color:var(--muted)">Montante financiado</span>
-              <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--blue)" id="mPreviewFinanciado">—</span>
+          </div>
+
+          <!-- Modo % -->
+          <div id="finPercPanel" style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <input type="number" id="fPercFinanciado" value="90" min="0" max="100" step="1"
+                style="width:72px;padding:8px 10px;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;border:2px solid var(--blue);border-radius:8px;text-align:center;background:var(--surface);color:var(--blue);outline:none" />
+              <span style="font-size:16px;font-weight:700;color:var(--blue)">%</span>
+              <span style="font-size:12px;color:var(--muted)">do valor de venda</span>
             </div>
+          </div>
+
+          <!-- Modo Valor direto -->
+          <div id="finValPanel" style="display:none;margin-bottom:10px;animation:slideDown .2s ease">
+            <div class="input-wrap" style="margin-bottom:0">
+              <span class="input-prefix" style="font-size:16px">€</span>
+              <input type="text" id="fValorFinanciado" inputmode="numeric" placeholder="Ex: 180.000"
+                style="width:100%;padding:12px 12px 12px 38px;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--blue);border:2px solid var(--blue);border-radius:8px;background:var(--surface);outline:none" />
+            </div>
+          </div>
+
+          <!-- Preview montante financiado -->
+          <div style="background:rgba(0,61,165,.06);border:1.5px solid rgba(0,61,165,.15);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:11px;font-weight:600;color:var(--muted)">Montante financiado</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--blue)" id="mPreviewFinanciado">—</span>
           </div>
 
           <!-- % comissão crédito -->
@@ -1152,8 +1169,11 @@ window.setModoCredito = function(modo) {
 
 function getModalMontanteCredito() {
   const valorVenda = parsePT(document.getElementById('fValor').value);
-  const percFin    = parseFloat(document.getElementById('fPercFinanciado').value)||90;
-  return valorVenda * (percFin/100);
+  if (finModo === 'val') {
+    return parsePT(document.getElementById('fValorFinanciado').value);
+  }
+  const percFin = parseFloat(document.getElementById('fPercFinanciado').value) || 90;
+  return valorVenda * (percFin / 100);
 }
 
 function getPercCredito() {
@@ -1208,6 +1228,8 @@ window.openModal = function(id=null) {
   document.getElementById('fTipoNeg').value = 'Partilha';
   document.getElementById('fPercCredito').value    = '0.3';
   document.getElementById('fPercFinanciado').value = '90';
+  document.getElementById('fValorFinanciado').value = '';
+  setFinModo('perc');
   ['fTipo1','fTipo2','fLocal','fValor','fOrigem','fPercTotal','fPercAgente',
    'fComAgencia','fComJessica'].forEach(f=>{
     const el=document.getElementById(f); if(el) el.value='';
@@ -1240,8 +1262,15 @@ window.openModal = function(id=null) {
       }
       if (n.ganhoCredito) {
         setModoCredito('sim');
-        document.getElementById('fPercCredito').value    = n.percCredito||0.3;
-        document.getElementById('fPercFinanciado').value = n.percFinanciado||90;
+        document.getElementById('fPercCredito').value    = n.percCredito    || 0.3;
+        document.getElementById('fPercFinanciado').value = n.percFinanciado  || 90;
+        if (n.finModo === 'val' && n.creditoValor) {
+          setFinModo('val');
+          document.getElementById('fValorFinanciado').value =
+            Math.round(n.creditoValor).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+        } else {
+          setFinModo('perc');
+        }
         calcModalCreditoPreview();
       }
     }
@@ -1287,7 +1316,7 @@ window.salvarNegocio = async function() {
     comAgencia, comJessica,
     override:    modalModoComissao==='manual',
     ganhoCredito, percCredito: percCred, percFinanciado: percFin,
-    creditoValor: montCredito,
+    finModo, creditoValor: montCredito,
     totalGanho:  comJessica+ganhoCredito,
     ts:          serverTimestamp()
   };
@@ -1456,6 +1485,17 @@ function launchConfetti() {
   draw();
 }
 
+/* ── FINANCIAMENTO MODO ── */
+let finModo = 'perc'; // 'perc' | 'val'
+function setFinModo(modo) {
+  finModo = modo;
+  document.getElementById('swFinPercBtn').classList.toggle('active', modo==='perc');
+  document.getElementById('swFinValBtn').classList.toggle('active', modo==='val');
+  document.getElementById('finPercPanel').style.display = modo==='perc' ? 'block' : 'none';
+  document.getElementById('finValPanel').style.display  = modo==='val'  ? 'block' : 'none';
+  calcModalCreditoPreview();
+}
+
 /* ── BIND ALL EVENTS (replaces inline onclick) ── */
 document.getElementById('btnTotal').addEventListener('click', ()=>setPapel('total'));
 document.getElementById('btnPartilha').addEventListener('click', ()=>setPapel('partilha'));
@@ -1476,6 +1516,9 @@ document.getElementById('swCredNaoBtn').addEventListener('click', ()=>setModoCre
 document.getElementById('swCredSimBtn').addEventListener('click', ()=>setModoCredito('sim'));
 document.querySelector('.btn-save').addEventListener('click', salvarNegocio);
 document.getElementById('irsToggle').addEventListener('change', renderDashboard);
+document.getElementById('swFinPercBtn').addEventListener('click', ()=>setFinModo('perc'));
+document.getElementById('swFinValBtn').addEventListener('click', ()=>setFinModo('val'));
+fmtNumInput(document.getElementById('fValorFinanciado'), calcModalCreditoPreview);
 document.querySelectorAll('.filter-chip').forEach(chip => {
   chip.addEventListener('click', function(){ setFilter(this.textContent.trim(), this); });
 });
