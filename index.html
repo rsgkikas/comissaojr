@@ -391,6 +391,31 @@
     }
     .auto-val-box.green{color:var(--green);border-color:rgba(0,168,120,.3);}
 
+    /* ── TABELA NEGÓCIOS ── */
+    .neg-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .neg-table thead tr { background:var(--blue); color:#fff; position:sticky; top:0; z-index:10; }
+    .neg-table th { padding:10px 8px; text-align:left; font-weight:700; font-size:11px; letter-spacing:.04em; white-space:nowrap; }
+    .neg-table tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
+    .neg-table tbody tr:hover { background:rgba(0,61,165,.04); }
+    .neg-table td { padding:9px 8px; vertical-align:middle; color:var(--text); }
+
+    /* ── TABELA NEGÓCIOS ── */
+    .neg-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);min-width:680px;}
+    .neg-table thead th{background:var(--blue);color:#fff;padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;position:sticky;top:0;z-index:1;}
+    .neg-table thead th:last-child{width:70px;text-align:center;}
+    .neg-table tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+    .neg-table tbody tr:hover{background:var(--surface2);}
+    .neg-table tbody td{padding:9px 10px;vertical-align:middle;white-space:nowrap;color:var(--text);}
+    .neg-table .td-num{font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .neg-table .td-jessica{color:var(--green);font-weight:700;font-family:'JetBrains Mono',monospace;}
+    .neg-table .td-total{color:var(--blue);font-weight:700;font-family:'JetBrains Mono',monospace;}
+    .neg-table .td-actions{display:flex;gap:4px;justify-content:center;}
+    .neg-table .btn-icon{border:none;background:none;cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;transition:background .15s;}
+    .neg-table .btn-icon:hover{background:var(--bg);}
+    .neg-table .badge{display:inline-block;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;}
+    .neg-table .badge-total{background:rgba(0,61,165,.1);color:var(--blue);}
+    .neg-table .badge-partilha{background:rgba(225,27,34,.1);color:var(--red);}
+
     /* ══ SWITCHER ══ */
     .switcher{
       display:flex;background:var(--surface2);border:1.5px solid var(--border);
@@ -607,11 +632,29 @@
     <button class="filter-chip">Partilha</button>
   </div>
 
-  <div class="container" id="negociosList">
-    <div class="empty-state">
-      <div class="es-icon">🏠</div>
-      <p>Ainda não há negócios registados.<br>Toca no <strong>+</strong> para adicionar o primeiro!</p>
-    </div>
+  <div style="overflow-x:auto;padding:0 0 100px">
+    <table class="neg-table" id="negociosList">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Local</th>
+          <th>Venda</th>
+          <th>Com. Agência</th>
+          <th>Com. Jéssica</th>
+          <th>Crédito</th>
+          <th>Total</th>
+          <th>Origem</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="negTbody">
+        <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
+          <div style="font-size:32px;margin-bottom:8px">🏠</div>
+          Ainda não há negócios registados.
+        </td></tr>
+      </tbody>
+    </table>
   </div>
 
   <button class="fab" id="fabBtn">+</button>
@@ -627,24 +670,33 @@
   </header>
   <div class="container">
 
-    <!-- IRS TOGGLE -->
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow)">
-      <div>
-        <div style="font-size:13px;font-weight:700;color:var(--text)">Desconto IRS (23%)</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Aplica a todos os valores da Jéssica</div>
+    <!-- CONTROLES: Ano + IRS -->
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+      <!-- Filtro Ano -->
+      <div class="select-wrap" style="flex:1">
+        <select id="dashAnoSelect" class="std-input" style="padding:11px 36px 11px 12px;font-size:13px">
+          <option value="todos">Todos os anos</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </select>
       </div>
-      <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer">
-        <input type="checkbox" id="irsToggle" style="opacity:0;width:0;height:0">
-        <span id="irsSlider" style="position:absolute;inset:0;background:var(--border);border-radius:13px;transition:.3s;"></span>
-        <span id="irsKnob" style="position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
-      </label>
+      <!-- IRS Toggle -->
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;box-shadow:var(--shadow)">
+        <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap">IRS 23%</span>
+        <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer">
+          <input type="checkbox" id="irsToggle" style="opacity:0;width:0;height:0">
+          <span id="irsSlider" style="position:absolute;inset:0;background:var(--border);border-radius:11px;transition:.3s"></span>
+          <span id="irsKnob" style="position:absolute;left:2px;top:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+        </label>
+      </div>
     </div>
 
-    <!-- KPI GRID — linha 1: Total Ganho + Reporting -->
+    <!-- KPI GRID — linha 1 -->
     <div class="kpi-grid" style="margin-bottom:10px">
       <div class="kpi-card" style="border-top:3px solid var(--green)">
         <div class="kpi-icon">💰</div>
-        <div class="kpi-label">Total Ganho <span id="irsLabel" style="font-size:9px;background:rgba(0,168,120,.12);color:var(--green);padding:2px 6px;border-radius:100px;display:none">s/ IRS</span></div>
+        <div class="kpi-label">Total Ganho <span id="irsLabel" style="font-size:9px;background:rgba(0,168,120,.12);color:var(--green);padding:2px 6px;border-radius:100px;display:none">s/IRS</span></div>
         <div class="kpi-value green" id="kpiTotal">—</div>
       </div>
       <div class="kpi-card" style="border-top:3px solid var(--blue)">
@@ -653,8 +705,7 @@
         <div class="kpi-value blue" id="kpiReporting">—</div>
       </div>
     </div>
-
-    <!-- KPI GRID — linha 2: Negócios + Média -->
+    <!-- KPI GRID — linha 2 -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-icon">🏠</div>
@@ -663,26 +714,35 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-icon">📈</div>
-        <div class="kpi-label">Média / Negócio <span id="irsLabelMedia" style="font-size:9px;background:rgba(244,162,49,.15);color:var(--orange);padding:2px 6px;border-radius:100px;display:none">s/ IRS</span></div>
+        <div class="kpi-label">Média / Negócio <span id="irsLabelMedia" style="font-size:9px;background:rgba(244,162,49,.15);color:#f4a231;padding:2px 6px;border-radius:100px;display:none">s/IRS</span></div>
         <div class="kpi-value orange" id="kpiMedia">—</div>
       </div>
     </div>
 
+    <!-- Evolução Mensal — Ganhos -->
     <div class="chart-card" style="margin-top:14px">
-      <div class="chart-title">📅 Evolução Mensal (€ ganhos)</div>
+      <div class="chart-title">📅 Ganhos Mensais (€)</div>
       <div class="chart-wrap"><canvas id="chartMensal"></canvas></div>
     </div>
 
+    <!-- Negócios Fechados por Mês -->
+    <div class="chart-card">
+      <div class="chart-title">🏠 Negócios Fechados por Mês</div>
+      <div class="chart-wrap"><canvas id="chartNegMes"></canvas></div>
+    </div>
+
+    <!-- Pie charts -->
     <div class="chart-card">
       <div class="chart-title">🎯 Origem dos Clientes</div>
-      <div class="chart-wrap" style="height:160px"><canvas id="chartOrigens"></canvas></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartOrigens"></canvas></div>
     </div>
 
     <div class="chart-card">
       <div class="chart-title">🏘️ Negócios por Tipologia</div>
-      <div class="chart-wrap" style="height:160px"><canvas id="chartTipos"></canvas></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartTipos"></canvas></div>
     </div>
 
+    <!-- Top localizações -->
     <div class="chart-card">
       <div class="chart-title">📍 Top Localizações</div>
       <div id="chartLocais"></div>
@@ -917,7 +977,7 @@ const db    = getFirestore(fbApp);
 /* ── GLOBALS ── */
 let papel = 'total', creditoAtivo = false, baseCredito = 'venda';
 let allNegocios = [], editingId = null, activeFilter = 'todos';
-let chartMensal = null, chartOrigens = null, chartTipos = null;
+let chartMensal = null, chartNegMes = null, chartOrigens = null, chartTipos = null;
 let modalModoComissao = 'auto', modalModoCredito = 'nao', modalBaseCredito = 'venda';
 
 /* ── UTILS ── */
@@ -1101,52 +1161,37 @@ function filteredNegocios() {
 
 function renderNegocios() {
   const list = filteredNegocios();
-  const container = document.getElementById('negociosList');
   document.getElementById('negSubtitle').textContent =
     `${allNegocios.length} negócio${allNegocios.length!==1?'s':''} registado${allNegocios.length!==1?'s':''}`;
+  const tbody = document.getElementById('negTbody');
   if (!list.length) {
-    container.innerHTML=`<div class="empty-state"><div class="es-icon">🏠</div><p>${activeFilter!=='todos'?'Sem negócios neste filtro.':'Ainda não há negócios.<br>Toca no <strong>+</strong> para adicionar!'}</p></div>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">🏠</div>
+      ${activeFilter!=='todos'?'Sem negócios neste filtro.':'Ainda não há negócios. Toca no + para adicionar!'}
+    </td></tr>`;
     return;
   }
-  container.innerHTML = list.map((n,i)=>{
+  tbody.innerHTML = list.map(n=>{
     const jessica = n.comJessica!=null ? formatPT(parseFloat(n.comJessica))+' €' : '—';
     const agencia = n.comAgencia!=null ? formatPT(parseFloat(n.comAgencia))+' €' : '—';
-    const credito = n.ganhoCredito    ? formatPT(parseFloat(n.ganhoCredito))+' €' : '—';
-    const total   = n.totalGanho      ? formatPT(parseFloat(n.totalGanho))+' €'  : jessica;
-    return `
-    <div class="negocio-card" style="animation-delay:${i*0.04}s">
-      <div class="negocio-top">
-        <span class="negocio-tipo">${n.tipo1||''} ${n.tipo2||''} · ${n.tipoNeg||''}</span>
-        <span class="negocio-data">${n.data?new Date(n.data+'T00:00:00').toLocaleDateString('pt-PT'):'—'}</span>
-      </div>
-      <div class="negocio-local">📍 ${n.local||'—'} &nbsp;·&nbsp; ${n.origem||'—'}</div>
-      <div class="negocio-vals">
-        <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Valor Venda</div>
-          <div class="negocio-val-num">${n.valorVenda?formatPT(parseFloat(n.valorVenda))+' €':'—'}</div>
-        </div>
-        <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Comissão Agência</div>
-          <div class="negocio-val-num">${agencia}</div>
-        </div>
-        <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Comissão Jéssica</div>
-          <div class="negocio-val-num" style="color:var(--green)">${jessica}</div>
-        </div>
-        <div class="negocio-val-box">
-          <div class="negocio-val-lbl">Crédito</div>
-          <div class="negocio-val-num" style="color:var(--green)">${credito}</div>
-        </div>
-      </div>
-      <div style="background:linear-gradient(135deg,var(--blue-dark),var(--blue));border-radius:8px;padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em">Total a Receber</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#fff">${total}</span>
-      </div>
-      <div class="negocio-actions">
-        <button class="btn-edit" onclick="openModal('${n.id}')">✏️ Editar</button>
-        <button class="btn-del" onclick="deleteNegocio('${n.id}')">🗑️ Apagar</button>
-      </div>
-    </div>`;
+    const credito = n.ganhoCredito     ? formatPT(parseFloat(n.ganhoCredito))+' €': '—';
+    const total   = n.totalGanho       ? formatPT(parseFloat(n.totalGanho))+' €'  : jessica;
+    const data    = n.data ? new Date(n.data+'T00:00:00').toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    return `<tr>
+      <td>${data}</td>
+      <td><span style="white-space:nowrap">${n.tipo1||''} ${n.tipo2||''}</span><br><small style="color:var(--muted);font-size:10px">${n.tipoNeg||''}</small></td>
+      <td>${n.local||'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;white-space:nowrap">${n.valorVenda?formatPT(parseFloat(n.valorVenda))+' €':'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;white-space:nowrap">${agencia}</td>
+      <td style="font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--green);font-weight:700">${jessica}</td>
+      <td style="font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--green)">${credito}</td>
+      <td style="font-family:'JetBrains Mono',monospace;white-space:nowrap;font-weight:700;color:var(--blue)">${total}</td>
+      <td>${n.origem||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-edit" style="padding:4px 8px;font-size:11px" onclick="openModal('${n.id}')">✏️</button>
+        <button class="btn-del"  style="padding:4px 8px;font-size:11px;margin-left:4px" onclick="deleteNegocio('${n.id}')">🗑️</button>
+      </td>
+    </tr>`;
   }).join('');
 }
 
@@ -1347,92 +1392,136 @@ window.deleteNegocio = async function(id) {
    TAB 3 — DASHBOARD
 ══════════════════════════════════ */
 function renderDashboard() {
-  const negs = allNegocios;
-  const comIRS = document.getElementById('irsToggle')?.checked || false;
-  const IRS = 0.23;
+  const comIRS   = document.getElementById('irsToggle')?.checked || false;
+  const anoSel   = document.getElementById('dashAnoSelect')?.value || 'todos';
+  const IRS      = 0.23;
+
+  // Filtro por ano
+  const negs = anoSel === 'todos'
+    ? allNegocios
+    : allNegocios.filter(n => (n.data||'').startsWith(anoSel));
 
   // IRS toggle visual
   const slider = document.getElementById('irsSlider');
   const knob   = document.getElementById('irsKnob');
   if (slider) slider.style.background = comIRS ? 'var(--blue)' : 'var(--border)';
-  if (knob)   knob.style.left = comIRS ? '25px' : '3px';
-
-  // Badge labels
-  const irsLabel      = document.getElementById('irsLabel');
-  const irsLabelMedia = document.getElementById('irsLabelMedia');
-  if (irsLabel)      irsLabel.style.display      = comIRS ? 'inline' : 'none';
-  if (irsLabelMedia) irsLabelMedia.style.display = comIRS ? 'inline' : 'none';
+  if (knob)   knob.style.left = comIRS ? '21px' : '2px';
+  document.getElementById('irsLabel').style.display      = comIRS ? 'inline' : 'none';
+  document.getElementById('irsLabelMedia').style.display = comIRS ? 'inline' : 'none';
 
   if (!negs.length) {
     ['kpiTotal','kpiReporting','kpiCount','kpiMedia'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.textContent='—';
     });
+    // clear charts
+    [chartMensal,chartNegMes,chartOrigens,chartTipos].forEach(c=>{ if(c) c.destroy(); });
+    chartMensal=chartNegMes=chartOrigens=chartTipos=null;
+    document.getElementById('chartLocais').innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Sem dados</p>';
     return;
   }
 
-  // Total Ganho Jéssica (comJessica + ganhoCredito)
-  const totalBruto = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
-  const totalLiq   = comIRS ? totalBruto*(1-IRS) : totalBruto;
-  document.getElementById('kpiTotal').textContent = formatPT(totalLiq)+' €';
-
-  // Reporting — soma das comissões da agência
+  // KPIs
+  const totalBruto   = negs.reduce((s,n)=>s+(parseFloat(n.totalGanho||n.comJessica)||0),0);
+  const totalLiq     = comIRS ? totalBruto*(1-IRS) : totalBruto;
   const totalAgencia = negs.reduce((s,n)=>s+(parseFloat(n.comAgencia)||0),0);
+  const mediaBruta   = totalBruto / negs.length;
+  const mediaLiq     = comIRS ? mediaBruta*(1-IRS) : mediaBruta;
+  document.getElementById('kpiTotal').textContent     = formatPT(totalLiq)+' €';
   document.getElementById('kpiReporting').textContent = formatPT(totalAgencia)+' €';
+  document.getElementById('kpiCount').textContent     = negs.length;
+  document.getElementById('kpiMedia').textContent     = formatPT(mediaLiq)+' €';
 
-  // Nº negócios
-  document.getElementById('kpiCount').textContent = negs.length;
+  // Gerar sempre os 12 meses do ano selecionado (ou ano atual se "todos")
+  const refAno = anoSel !== 'todos' ? parseInt(anoSel) : new Date().getFullYear();
+  const allMonths = Array.from({length:12},(_,i)=>{
+    const m = String(i+1).padStart(2,'0');
+    return `${refAno}-${m}`;
+  });
+  const monthLabels = allMonths.map(m=>
+    new Date(m+'-01').toLocaleDateString('pt-PT',{month:'short'})
+  );
 
-  // Média por negócio
-  const mediaBruta = totalBruto / negs.length;
-  const mediaLiq   = comIRS ? mediaBruta*(1-IRS) : mediaBruta;
-  document.getElementById('kpiMedia').textContent = formatPT(mediaLiq)+' €';
-
-  // Gráfico mensal (com ou sem IRS)
-  const byMonth = {};
+  // Dados por mês — ganhos e nº negócios
+  const byMonthVal = {}, byMonthCnt = {};
+  allMonths.forEach(m=>{ byMonthVal[m]=0; byMonthCnt[m]=0; });
   negs.forEach(n=>{
     if (!n.data) return;
     const m = n.data.substring(0,7);
-    const v = parseFloat(n.totalGanho||n.comJessica)||0;
-    byMonth[m] = (byMonth[m]||0) + (comIRS ? v*(1-IRS) : v);
+    if (byMonthVal[m]!==undefined) {
+      const v = parseFloat(n.totalGanho||n.comJessica)||0;
+      byMonthVal[m] += comIRS ? v*(1-IRS) : v;
+      byMonthCnt[m] += 1;
+    }
   });
-  const months = Object.keys(byMonth).sort();
-  const labels = months.map(m=>new Date(m+'-01').toLocaleDateString('pt-PT',{month:'short',year:'2-digit'}));
-  const values = months.map(m=>byMonth[m]);
+  const valData = allMonths.map(m=>byMonthVal[m]);
+  const cntData = allMonths.map(m=>byMonthCnt[m]);
 
+  // Chart — Ganhos Mensais
   if (chartMensal) chartMensal.destroy();
   chartMensal = new Chart(document.getElementById('chartMensal'),{
     type:'bar',
-    data:{labels,datasets:[{label:'Ganhos (€)',data:values,
-      backgroundColor:'rgba(0,61,165,.75)',borderRadius:6,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{y:{ticks:{callback:v=>formatPT(v)+' €'},grid:{color:'rgba(0,0,0,.05)'}},
+    data:{labels:monthLabels, datasets:[{
+      label:'Ganhos (€)', data:valData,
+      backgroundColor:valData.map(v=>v>0?'rgba(0,61,165,.8)':'rgba(0,61,165,.15)'),
+      borderRadius:5, borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>' '+formatPT(c.raw)+' €'}}},
+      scales:{y:{ticks:{callback:v=>v>0?formatPT(v)+' €':'0'},grid:{color:'rgba(0,0,0,.05)'}},
               x:{grid:{display:false}}}}
   });
 
-  // Origens
+  // Chart — Negócios por Mês
+  if (chartNegMes) chartNegMes.destroy();
+  chartNegMes = new Chart(document.getElementById('chartNegMes'),{
+    type:'bar',
+    data:{labels:monthLabels, datasets:[{
+      label:'Negócios', data:cntData,
+      backgroundColor:cntData.map(v=>v>0?'rgba(225,27,34,.75)':'rgba(225,27,34,.15)'),
+      borderRadius:5, borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${c.raw} negócio${c.raw!==1?'s':''}`}}},
+      scales:{y:{ticks:{stepSize:1,precision:0},grid:{color:'rgba(0,0,0,.05)'}},
+              x:{grid:{display:false}}}}
+  });
+
+  // Pie options reutilizáveis com labels externos
+  const pieOpts = (pos='right') => ({
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{position:pos, labels:{font:{size:11}, padding:10, boxWidth:12}},
+      tooltip:{callbacks:{label:c=>{
+        const tot = c.dataset.data.reduce((a,b)=>a+b,0);
+        return ` ${c.label}: ${c.raw} (${Math.round(c.raw/tot*100)}%)`;
+      }}}
+    }
+  });
+
+  // Chart — Origens
   const origens={};
   negs.forEach(n=>{ if(n.origem) origens[n.origem]=(origens[n.origem]||0)+1; });
   if (chartOrigens) chartOrigens.destroy();
   chartOrigens = new Chart(document.getElementById('chartOrigens'),{
     type:'doughnut',
-    data:{labels:Object.keys(origens),datasets:[{data:Object.values(origens),
-      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc'],
-      borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',
-      labels:{font:{size:11},padding:10}}}}
+    data:{labels:Object.keys(origens), datasets:[{data:Object.values(origens),
+      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc','#ff6b6b'],
+      borderWidth:2, borderColor:'#fff'}]},
+    options: pieOpts('right')
   });
 
-  // Tipologias
+  // Chart — Tipologias
   const tipos={};
   negs.forEach(n=>{ const k=(n.tipo1||'?')+' '+(n.tipo2||''); tipos[k]=(tipos[k]||0)+1; });
   if (chartTipos) chartTipos.destroy();
   chartTipos = new Chart(document.getElementById('chartTipos'),{
     type:'doughnut',
-    data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),
-      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed'],
-      borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',
-      labels:{font:{size:11},padding:10}}}}
+    data:{labels:Object.keys(tipos), datasets:[{data:Object.values(tipos),
+      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc'],
+      borderWidth:2, borderColor:'#fff'}]},
+    options: pieOpts('right')
   });
 
   // Top localizações
@@ -1519,6 +1608,7 @@ document.getElementById('swCredNaoBtn').addEventListener('click', ()=>setModoCre
 document.getElementById('swCredSimBtn').addEventListener('click', ()=>setModoCredito('sim'));
 document.querySelector('.btn-save').addEventListener('click', salvarNegocio);
 document.getElementById('irsToggle').addEventListener('change', renderDashboard);
+document.getElementById('dashAnoSelect').addEventListener('change', renderDashboard);
 document.getElementById('swFinPercBtn').addEventListener('click', ()=>setFinModo('perc'));
 document.getElementById('swFinValBtn').addEventListener('click', ()=>setFinModo('val'));
 fmtNumInput(document.getElementById('fValorFinanciado'), calcModalCreditoPreview);
