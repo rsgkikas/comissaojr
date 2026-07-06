@@ -17,6 +17,7 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
   <style>
     :root {
@@ -731,15 +732,14 @@
       <div class="chart-wrap"><canvas id="chartNegMes"></canvas></div>
     </div>
 
-    <!-- Pie charts -->
     <div class="chart-card">
       <div class="chart-title">🎯 Origem dos Clientes</div>
-      <div class="chart-wrap" style="height:200px"><canvas id="chartOrigens"></canvas></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartOrigens"></canvas></div>
     </div>
 
     <div class="chart-card">
       <div class="chart-title">🏘️ Negócios por Tipologia</div>
-      <div class="chart-wrap" style="height:200px"><canvas id="chartTipos"></canvas></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartTipos"></canvas></div>
     </div>
 
     <!-- Top localizações -->
@@ -1488,15 +1488,35 @@ function renderDashboard() {
               x:{grid:{display:false}}}}
   });
 
-  // Pie options reutilizáveis com labels externos
-  const pieOpts = (pos='right') => ({
-    responsive:true, maintainAspectRatio:false,
-    plugins:{
-      legend:{position:pos, labels:{font:{size:11}, padding:10, boxWidth:12}},
-      tooltip:{callbacks:{label:c=>{
-        const tot = c.dataset.data.reduce((a,b)=>a+b,0);
-        return ` ${c.label}: ${c.raw} (${Math.round(c.raw/tot*100)}%)`;
-      }}}
+  // Pie options — legenda em baixo + datalabels dentro das fatias
+  const COLORS = ['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc','#ff6b6b','#06d6a0'];
+  const pieOpts = () => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { font:{size:11}, padding:12, boxWidth:12, usePointStyle:true }
+      },
+      datalabels: {
+        color: '#fff',
+        font: { size: 11, weight: 'bold', family: "'Sora', sans-serif" },
+        formatter: (value, ctx) => {
+          const tot = ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct = Math.round(value/tot*100);
+          return pct >= 8 ? pct+'%' : '';  // só mostra se fatia >= 8%
+        },
+        textStrokeColor: 'rgba(0,0,0,.3)',
+        textStrokeWidth: 2,
+      },
+      tooltip: {
+        callbacks: {
+          label: c => {
+            const tot = c.dataset.data.reduce((a,b)=>a+b,0);
+            return ` ${c.label}: ${c.raw} (${Math.round(c.raw/tot*100)}%)`;
+          }
+        }
+      }
     }
   });
 
@@ -1507,9 +1527,10 @@ function renderDashboard() {
   chartOrigens = new Chart(document.getElementById('chartOrigens'),{
     type:'doughnut',
     data:{labels:Object.keys(origens), datasets:[{data:Object.values(origens),
-      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc','#ff6b6b'],
+      backgroundColor: COLORS.slice(0, Object.keys(origens).length),
       borderWidth:2, borderColor:'#fff'}]},
-    options: pieOpts('right')
+    options: pieOpts(),
+    plugins: [ChartDataLabels]
   });
 
   // Chart — Tipologias
@@ -1519,9 +1540,10 @@ function renderDashboard() {
   chartTipos = new Chart(document.getElementById('chartTipos'),{
     type:'doughnut',
     data:{labels:Object.keys(tipos), datasets:[{data:Object.values(tipos),
-      backgroundColor:['#003da5','#e11b22','#00a878','#f4a231','#7c3aed','#0050cc'],
+      backgroundColor: COLORS.slice(0, Object.keys(tipos).length),
       borderWidth:2, borderColor:'#fff'}]},
-    options: pieOpts('right')
+    options: pieOpts(),
+    plugins: [ChartDataLabels]
   });
 
   // Top localizações
